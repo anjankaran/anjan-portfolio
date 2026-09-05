@@ -1,4 +1,5 @@
 import { profile } from "../data/content";
+import FooterTrees from "./leaf/FooterTrees";
 
 export default function Footer() {
   return (
@@ -10,8 +11,8 @@ export default function Footer() {
         <div className="flex flex-wrap items-start justify-between gap-8">
           <div>
             <a href="#top" className="flex items-center gap-2.5 text-[15px] font-extrabold tracking-tight text-white">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-lime text-[12px] font-extrabold text-panel-3">
-                AK
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm shadow-black/10">
+                <img src="/assets/logo.png" alt="" className="h-7 w-7 object-contain" />
               </span>
               {profile.name}
             </a>
@@ -40,7 +41,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="relative mt-6 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 text-[12px] text-white/45 sm:flex-row">
+        <FooterTrees />
+
+        <div className="relative mt-2 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 text-[12px] text-white/45 sm:flex-row">
           <span>© {new Date().getFullYear()} {profile.name}. All rights reserved.</span>
           <span className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />

@@ -12,6 +12,8 @@ import ChatWidget from "./components/ChatWidget";
 import IntroLoader from "./components/IntroLoader";
 import ContactModal from "./components/ContactModal";
 import { ContactModalProvider } from "./context/ContactModalContext";
+import LeafFall from "./components/leaf/LeafFall";
+import LeafCursor from "./components/leaf/LeafCursor";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -21,6 +23,11 @@ function App() {
     <ContactModalProvider>
       <div className="min-h-screen bg-ink text-fg">
         <IntroLoader onReveal={handleReveal} />
+
+        {/* leaves fall the length of the page: one layer tucked behind the
+            section cards, one drifting in front of them */}
+        <LeafFall layer="back" count={10} />
+        <LeafFall layer="front" count={6} />
 
         <div className="pointer-events-none fixed -right-40 -top-44 h-[760px] w-[760px] rounded-full bg-[radial-gradient(circle,rgba(79,154,42,0.12),transparent_62%)]" />
         <div className="pointer-events-none fixed -bottom-60 -left-40 h-[640px] w-[640px] rounded-full bg-[radial-gradient(circle,rgba(79,154,42,0.08),transparent_65%)]" />
@@ -41,6 +48,8 @@ function App() {
         </div>
 
         <Footer />
+
+        <LeafCursor />
 
         <ChatWidget />
         <ContactModal />

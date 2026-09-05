@@ -105,3 +105,23 @@ body {
 .text-balance {
   text-wrap: balance;
 }
+
+/* Leaf cursor: the leaf replaces the pointer, except where you need to aim or
+   type - text fields keep the caret, and touch devices never get this at all. */
+html.leaf-cursor,
+html.leaf-cursor body,
+html.leaf-cursor *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+  cursor: none;
+}
+html.leaf-cursor input,
+html.leaf-cursor textarea,
+html.leaf-cursor select,
+html.leaf-cursor [contenteditable="true"] {
+  cursor: auto;
+}
+@media (pointer: coarse) {
+  html.leaf-cursor,
+  html.leaf-cursor body {
+    cursor: auto;
+  }
+}

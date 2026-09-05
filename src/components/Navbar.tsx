@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { profile } from "../data/content";
 
@@ -65,6 +65,10 @@ export default function Navbar({ ready }: { ready: boolean }) {
 
   const hiddenNow = hidden && !overHero;
 
+  // how far down the page you are - the same value the leaves fall on
+  const { scrollYProgress } = useScroll();
+  const growth = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.4 });
+
   return (
     <motion.header
       initial={{ y: -30, opacity: 0 }}
@@ -76,6 +80,13 @@ export default function Navbar({ ready }: { ready: boolean }) {
           : "bg-gradient-to-r from-[#123021] via-[#0e2418] to-[#0a1d14] shadow-md shadow-black/15"
       }`}
     >
+      {/* growth line: fills as you scroll the page */}
+      <motion.div
+        aria-hidden="true"
+        style={{ scaleX: growth }}
+        className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-gradient-to-r from-lime/70 via-lime to-lime-light"
+      />
+
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <a
           href="#top"
@@ -88,7 +99,7 @@ export default function Navbar({ ready }: { ready: boolean }) {
           >
             <img src="/assets/logo.png" alt="" className={overHero ? "h-11 w-11 object-contain" : "h-8 w-8 object-contain"} />
           </span>
-          <span className={overHero ? "text-[#0e2418]" : "text-white"}>{profile.name}</span>
+          <span className={overHero ? "text-[#2f7d1c]" : "text-white"}>{profile.name}</span>
         </a>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -111,7 +122,7 @@ export default function Navbar({ ready }: { ready: boolean }) {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="mr-28 hidden items-center gap-3 md:flex">
           <a
             href="#contact"
             className="rounded-full bg-lime px-4 py-2 text-[13px] font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"

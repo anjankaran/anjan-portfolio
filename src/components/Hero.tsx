@@ -1,6 +1,7 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { profile, stats } from "../data/content";
+import HeroLeaf from "./leaf/HeroLeaf";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -15,6 +16,11 @@ const item = {
 };
 
 export default function Hero({ ready }: { ready: boolean }) {
+  // the copy drifts up a touch slower than the page, so the hero has depth
+  const { scrollY } = useScroll();
+  const copyY = useTransform(scrollY, [0, 700], [0, 70]);
+  const copyFade = useTransform(scrollY, [0, 560], [1, 0.35]);
+
   return (
     <section
       id="top"
@@ -24,11 +30,14 @@ export default function Hero({ ready }: { ready: boolean }) {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(247,250,245,0.84)_0%,rgba(247,250,245,0.62)_34%,rgba(247,250,245,0.22)_62%,rgba(247,250,245,0)_100%)]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-ink/80 to-transparent" />
 
+      <HeroLeaf />
+
       <div className="relative mx-auto flex min-h-[650px] max-w-[1320px] items-center px-5 pb-16 pt-[92px] sm:px-8 lg:min-h-[760px] lg:px-10">
         <motion.div
           variants={container}
           initial="hidden"
           animate={ready ? "show" : "hidden"}
+          style={{ y: copyY, opacity: copyFade }}
           className="max-w-[610px] pb-4 lg:pb-6"
         >
           <motion.div

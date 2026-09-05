@@ -78,26 +78,43 @@ export type Project = {
   kind: "Live" | "Case Study" | "Demo";
   href?: string;
   metric?: string;
+  /** renders a real, running mini-app inside the card */
+  demo?: "analytics" | "business" | "zoho";
 };
 
 export const projects: Project[] = [
   {
-    id: "field-service",
-    title: "Field Service App",
-    category: "Zoho Creator",
+    id: "business-web-app",
+    title: "Business Web Application",
+    category: "React · Node · RBAC",
     description:
-      "Offline-first field service app for on-site technicians — job scheduling, signatures and photo capture synced to Zoho.",
-    tags: ["Zoho Creator", "Mobile", "Offline sync"],
+      "Custom web solutions for real business needs — projects, tasks and billing in one workspace, with role-based access and an audit trail.",
+    tags: ["React", "Node.js", "Workflows"],
     kind: "Live",
+    demo: "business",
+    metric: "Replaced 4 spreadsheets and a shared inbox",
   },
   {
-    id: "data-warehouse",
-    title: "Data Warehouse",
-    category: "Postgres · dbt",
+    id: "analytics-dashboard",
+    title: "Analytics Dashboard",
+    category: "Postgres · dbt · React",
     description:
-      "Centralized analytics warehouse pulling from Zoho, Stripe and product events, modeled with dbt for the whole org.",
-    tags: ["Postgres", "dbt", "ETL"],
-    kind: "Case Study",
+      "Real-time insights for smarter decisions — Zoho, Stripe and product events modelled with dbt, then surfaced as one dashboard the whole org reads.",
+    tags: ["Postgres", "dbt", "Charts"],
+    kind: "Live",
+    demo: "analytics",
+    metric: "One source of truth across 3 systems",
+  },
+  {
+    id: "zoho-creator",
+    title: "Zoho Creator - Custom Solution",
+    category: "Zoho Creator · Deluge",
+    description:
+      "A Zoho Creator application with a tailored frontend — customer records, filters and stage automation that behave like a product, not a form builder.",
+    tags: ["Zoho Creator", "Deluge", "Custom UI"],
+    kind: "Live",
+    demo: "zoho",
+    metric: "Field ops running fully on Zoho",
   },
   {
     id: "agent-widget",
@@ -125,15 +142,6 @@ export const projects: Project[] = [
       "A single React Native codebase shipping native iOS and Android apps — push notifications, offline sync and in-app payments.",
     tags: ["React Native", "iOS", "Android"],
     kind: "Live",
-  },
-  {
-    id: "rbac-webapp",
-    title: "Role-Based Ops Web App",
-    category: "React · Node · RBAC",
-    description:
-      "A multi-tenant web app with granular role-based access control — separate dashboards and permissions for admins, managers and field staff.",
-    tags: ["RBAC", "Multi-tenant", "Node.js"],
-    kind: "Case Study",
   },
   {
     id: "inhouse-platform",
