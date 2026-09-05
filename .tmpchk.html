@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SVG Editor Studio</title>
+<!-- Built from svg-studio/src by svg-studio/build.mjs - edit the modules,
+     not this file, then run:  npm run svg:build  -->
+<style>
+:root{
+  --bg:#0d1411; --panel:#131c18; --panel2:#18231e; --panel3:#1e2b25;
+  --line:#26352f; --txt:#dcebe3; --dim:#8ba79b; --dim2:#5f7a70;
+  --acc:#8ee32a; --acc-d:#1f3a17; --danger:#ff7a7a; --r:7px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);overflow:hidden;
+  font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* ---------- top bar ---------- */
+header{display:flex;align-items:center;gap:14px;padding:8px 12px;background:var(--panel);
+  border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap}
+.brand{font-weight:650;letter-spacing:.2px;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.brand span{color:var(--dim);font-weight:400;font-size:11px}
+.spacer{flex:1}
+.tbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.btn{background:var(--panel3);border:1px solid var(--line);border-radius:var(--r);
+  padding:5px 10px;cursor:pointer;white-space:nowrap;transition:.12s}
+.btn:hover{background:#25352d;border-color:#37493f}
+.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--acc);color:#0d1411;border-color:var(--acc);font-weight:600}
+.btn.pri:hover{background:#a2f43c}
+.btn.on{background:var(--acc-d);border-color:#3f6b2a;color:var(--acc)}
+.btn.icon{padding:5px 8px}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.sep{width:1px;height:20px;background:var(--line)}
+
+/* ---------- layout ---------- */
+main{flex:1;display:grid;grid-template-columns:232px 1fr 316px;min-height:0}
+aside{background:var(--panel);overflow-y:auto;min-height:0}
+#leftPane{border-right:1px solid var(--line)}
+#rightPane{border-left:1px solid var(--line)}
+.sect{border-bottom:1px solid var(--line)}
+.sect>h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--dim2);
+  padding:9px 11px 6px;display:flex;align-items:center;gap:6px}
+.sect .body{padding:0 11px 11px}
+
+/* ---------- layer tree ---------- */
+.layer{display:flex;align-items:center;gap:7px;padding:5px 11px;cursor:pointer;
+  border-left:2px solid transparent;user-select:none}
+.layer:hover{background:var(--panel2)}
+.layer.sel{background:var(--acc-d);border-left-color:var(--acc)}
+.layer.child{padding-left:26px;font-size:12px;color:var(--dim)}
+.layer.child.sel{color:var(--txt)}
+.layer .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.swatch{width:13px;height:13px;border-radius:3px;border:1px solid #0006;flex:none}
+.eye{opacity:.55;font-size:11px;width:16px;text-align:center;flex:none}
+.eye.off{opacity:.2}
+.layer .mini{opacity:0;font-size:11px;padding:0 3px;border-radius:3px;flex:none}
+.layer:hover .mini{opacity:.55}
+.layer .mini:hover{opacity:1;background:#0004}
+
+/* ---------- stage ---------- */
+#stage{position:relative;background:
+   linear-gradient(45deg,#0a100e 25%,transparent 25%,transparent 75%,#0a100e 75%),
+   linear-gradient(45deg,#0a100e 25%,#0f1714 25%,#0f1714 75%,#0a100e 75%);
+  background-size:22px 22px;background-position:0 0,11px 11px;min-height:0;overflow:hidden}
+#art{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+#art.panning{cursor:grabbing}
+.hud{position:absolute;left:10px;bottom:10px;display:flex;gap:8px;align-items:center;
+  background:#0b120fdd;border:1px solid var(--line);border-radius:var(--r);padding:4px 9px;
+  font-size:11px;color:var(--dim)}
+.hud b{color:var(--txt);font-weight:500;font-variant-numeric:tabular-nums}
+#tip{position:absolute;right:10px;bottom:10px;font-size:11px;color:var(--dim2);text-align:right;
+  background:#0b120fcc;border-radius:var(--r);padding:5px 8px;pointer-events:none;line-height:1.7}
+#tip kbd{background:var(--panel3);border:1px solid var(--line);border-radius:3px;padding:0 4px;font-size:10px}
+
+/* handles */
+/* colours come from handleTheme() as attributes so they can adapt to the art */
+.anchor{cursor:move}
+.ctrl{cursor:move}
+.anchor:hover,.ctrl:hover{stroke:var(--acc)}
+.conn{pointer-events:none}
+.ghost{fill:none;stroke:var(--acc);stroke-opacity:.85;pointer-events:none}
+.hitp{stroke:transparent;cursor:move}
+
+/* ---------- controls ---------- */
+.row{display:flex;align-items:center;gap:8px;margin-top:7px}
+.row>label{width:76px;flex:none;color:var(--dim);font-size:11.5px}
+.row.wide>label{width:auto}
+.grow{flex:1;min-width:0}
+input[type=text],input[type=number],select,textarea{
+  background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 6px;width:100%}
+input[type=number]{font-variant-numeric:tabular-nums}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc);background:#16201b}
+input[type=range]{width:100%;accent-color:var(--acc);background:none;border:none;padding:0}
+input[type=color]{-webkit-appearance:none;appearance:none;width:30px;height:26px;padding:0;
+  border:1px solid var(--line);border-radius:5px;background:none;cursor:pointer;flex:none}
+input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:3px}
+input[type=checkbox]{accent-color:var(--acc);width:14px;height:14px}
+.hint{color:var(--dim2);font-size:11px;margin-top:7px;line-height:1.55}
+.tabs{display:flex;gap:2px;padding:8px 8px 0}
+.tab{flex:1;text-align:center;padding:6px 4px;border-radius:6px 6px 0 0;cursor:pointer;
+  color:var(--dim);font-size:11.5px;border:1px solid transparent;border-bottom:none}
+.tab.on{background:var(--panel2);color:var(--txt);border-color:var(--line)}
+.tabbody{border-top:1px solid var(--line);margin-top:-1px}
+.empty{padding:28px 16px;color:var(--dim2);text-align:center;font-size:12px;line-height:1.7}
+
+/* point table */
+.pts{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.pts th{color:var(--dim2);font-weight:500;font-size:10px;text-transform:uppercase;
+  letter-spacing:.6px;padding:0 3px 4px;text-align:left}
+.pts td{padding:2px 2px}
+.pts input{padding:3px 4px;text-align:right}
+.pts select{padding:3px 3px}
+.pts .x{cursor:pointer;color:var(--dim2);padding:0 4px;text-align:center}
+.pts .x:hover{color:var(--danger)}
+.tag{display:inline-block;background:var(--panel3);border-radius:4px;padding:1px 6px;
+  font-size:10px;color:var(--dim)}
+.gbar{height:24px;border-radius:5px;border:1px solid var(--line);margin-top:7px}
+.stop{display:flex;align-items:center;gap:6px;margin-top:6px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);
+  padding:9px 10px;margin-top:9px}
+.card>h4{font-size:11.5px;display:flex;align-items:center;gap:6px;color:var(--txt)}
+
+/* ---------- code pane ---------- */
+#codePane{flex:none;height:264px;display:flex;flex-direction:column;background:var(--panel);
+  border-top:1px solid var(--line)}
+#codePane.collapsed{height:37px}
+#codePane.collapsed .codeBody{display:none}
+.codeHead{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--line);
+  flex:none;cursor:pointer;user-select:none}
+.codeHead h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--dim2)}
+.codeModes{display:flex;gap:3px}
+.codeModes .btn{padding:2px 9px;font-size:11px;border-radius:5px}
+.codeBody{flex:1;overflow:auto;min-height:0}
+pre#code{font:11.5px/1.6 ui-monospace,"Cascadia Code",Consolas,monospace;padding:10px 0;
+  white-space:pre;tab-size:2}
+pre#code .ln{color:#3d5147;user-select:none;display:inline-block;width:46px;text-align:right;
+  padding-right:12px}
+pre#code .t{color:#7fc7ff}
+pre#code .a{color:#8ee32a}
+pre#code .v{color:#ffd479}
+pre#code .c{color:#4d6459;font-style:italic}
+pre#code>span{display:block;min-height:1.6em}
+pre#code .hl{background:#8ee32a1c}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--acc);
+  color:#0d1411;font-weight:600;padding:8px 16px;border-radius:20px;z-index:99;
+  animation:tin .18s;box-shadow:0 6px 20px #0009}
+@keyframes tin{from{opacity:0;transform:translate(-50%,8px)}}
+@media(max-width:1120px){main{grid-template-columns:186px 1fr 270px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">◈ SVG Editor Studio <span>drop an SVG in, edit it, take it back out</span></div>
+    <div class="sep"></div>
+    <div class="tbar">
+      <button class="btn icon" id="bUndo" title="Undo (Ctrl+Z)">↶</button>
+      <button class="btn icon" id="bRedo" title="Redo (Ctrl+Shift+Z)">↷</button>
+      <div class="sep"></div>
+      <button class="btn" id="bHandles" title="Show points for every layer at once">All points</button>
+      <button class="btn" id="bSnap" title="Snap coordinates to whole units">Snap</button>
+      <button class="btn icon" id="bFit" title="Fit view">⤢ Fit</button>
+      <select id="handleMode" class="btn" style="padding:4px 6px;width:auto"
+              title="Colour of the bend handles">
+        <option value="auto">points: auto</option>
+        <option value="dark">points: dark</option>
+        <option value="light">points: light</option>
+      </select>
+      <div class="sep"></div>
+      <button class="btn" id="bImport" title="Open any .svg file and edit it here">↥ Open SVG</button>
+      <input type="file" id="fileIn" accept=".svg,image/svg+xml" hidden>
+    </div>
+    <div class="spacer"></div>
+    <div class="tbar">
+      <button class="btn" id="bReset" title="Back to the sample drawing">Reset</button>
+      <button class="btn" id="bCopyHtml" title="Copy the drawing as an HTML page">Copy HTML</button>
+      <button class="btn" id="bDownloadHtml" title="Save as a ready-to-open HTML page">↓ HTML</button>
+      <button class="btn pri" id="bDownload" title="Save the drawing as an .svg file">↓ Download SVG</button>
+    </div>
+  </header>
+
+  <main>
+    <aside id="leftPane">
+      <div class="sect">
+        <h3>Layers <span class="spacer"></span><span class="tag" id="layerCount"></span></h3>
+        <div id="layers"></div>
+      </div>
+      <div class="sect">
+        <h3>Add</h3>
+        <div class="body">
+          <div class="row wide"><button class="btn grow" data-add="path">+ Path</button></div>
+          <div class="row wide"><button class="btn grow" data-add="line">+ Line in group</button></div>
+          <div class="row wide"><button class="btn grow" data-add="group">+ Line group</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <section id="stage">
+      <svg id="art" xmlns="http://www.w3.org/2000/svg">
+        <defs id="defsHost"></defs>
+        <g id="viewport">
+          <rect id="bgRect" x="0" y="0" width="500" height="500"></rect>
+          <g id="artHost" style="pointer-events:none"></g>
+          <g id="hitHost"></g>
+          <g id="overlay"></g>
+        </g>
+      </svg>
+      <div class="hud">
+        <span>x <b id="hx">–</b></span><span>y <b id="hy">–</b></span>
+        <span class="sep"></span><span>zoom <b id="hz">100%</b></span>
+      </div>
+      <div id="tip">
+        drag a <b>point</b> to reshape · drag a <b>shape</b> to move it<br>
+        wheel = zoom · drag background = pan · <kbd>↑↓←→</kbd> nudge · <kbd>Esc</kbd> deselect
+      </div>
+    </section>
+
+    <aside id="rightPane">
+      <div class="tabs">
+        <div class="tab on" data-tab="el">Element</div>
+        <div class="tab" data-tab="grad">Gradients</div>
+        <div class="tab" data-tab="doc">Canvas</div>
+      </div>
+      <div class="tabbody" id="panel"></div>
+    </aside>
+  </main>
+
+  <section id="codePane">
+    <div class="codeHead" id="codeHead">
+      <h3 id="codeTitle">▾ Generated code</h3>
+      <span class="tag" id="codeStat"></span>
+      <div class="codeModes">
+        <button class="btn on" id="bModeSvg" title="Show the .svg file">SVG</button>
+        <button class="btn" id="bModeHtml" title="Show the HTML page">HTML</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn" id="bCopy2">Copy</button>
+    </div>
+    <div class="codeBody"><pre id="code"></pre></div>
+  </section>
+</div>
+<script>
+/* ==== util.js ======================================================= */
+/* util.js - tiny shared helpers
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const clone = o => JSON.parse(JSON.stringify(o));
+const num = (v, d = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
+const r2 = n => Math.round(n * 100) / 100;
+const uid = p => p + Math.random().toString(36).slice(2, 7);
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+let toastT = null;
+function toast(msg) {
+  const old = document.querySelector('.toast'); if (old) old.remove();
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastT); toastT = setTimeout(() => el.remove(), 2200);
+}
+
+/* ==== model.js ====================================================== */
+/* model.js - the drawing as data, plus path maths
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+/* ---------------------------------------------------------------- model */
+const P = (...n) => { const a = []; for (let i = 0; i < n.length; i += 2) a.push([n[i], n[i + 1]]); return a; };
+const seg = (type, ...n) => ({ type, pts: P(...n) });
+const Z = () => ({ type: 'Z', pts: [] });
+
+function original() {
+  return {
+    doc: {
+      title: 'Green Leaf Vector',
+      pageBg: '#f7fbf8',
+      maxWidth: 550,
+      viewBox: { x: 0, y: 0, w: 500, h: 500 },
+      shadow: { on: true, dx: 0, dy: 8, blur: 16, color: '#00280a', opacity: 0.06 },
+      blurStd: 6
+    },
+    gradients: [
+      { id: 'upperBladeGrad', label: 'Upper blade', x1: 0, y1: 100, x2: 80, y2: 0, stops: [
+        { off: 0, color: '#5ecf19', op: 1 }, { off: 30, color: '#80e320', op: 1 },
+        { off: 65, color: '#a4f134', op: 1 }, { off: 100, color: '#7bd91c', op: 1 } ] },
+      { id: 'lowerBladeGrad', label: 'Lower blade', x1: 0, y1: 100, x2: 100, y2: 0, stops: [
+        { off: 0, color: '#188615', op: 1 }, { off: 35, color: '#3eb816', op: 1 },
+        { off: 75, color: '#6ecb1c', op: 1 }, { off: 100, color: '#83e123', op: 1 } ] },
+      { id: 'stemGrad', label: 'Stem', x1: 0, y1: 100, x2: 100, y2: 0, stops: [
+        { off: 0, color: '#0e6910', op: 1 }, { off: 100, color: '#1a8915', op: 1 } ] },
+      { id: 'midribGrad', label: 'Midrib', x1: 0, y1: 100, x2: 100, y2: 0, stops: [
+        { off: 0, color: '#0f6a10', op: 1 }, { off: 40, color: '#248f14', op: 1 },
+        { off: 80, color: '#52be19', op: 1 }, { off: 100, color: '#76d81e', op: 1 } ] },
+      { id: 'highlightGlow', label: 'Sheen glow', x1: 0, y1: 100, x2: 100, y2: 0, stops: [
+        { off: 0, color: '#ffffff', op: 0.6 }, { off: 50, color: '#e2ffaa', op: 0.5 },
+        { off: 100, color: '#ffffff', op: 0 } ] }
+    ],
+    items: [
+      { id: 'halo', name: 'White halo', note: 'WHITE OUTER BORDER / GLOW HALO', type: 'path', on: true,
+        fill: { mode: 'solid', color: '#ffffff', op: 1 },
+        stroke: { mode: 'solid', color: '#ffffff', op: 1 }, w: 12, cap: 'round', join: 'round',
+        op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 42, 488), seg('C', 62, 468, 82, 445, 110, 420),
+                seg('C', 70, 270, 180, 110, 390, 70), seg('C', 360, 310, 230, 450, 110, 420), Z() ] },
+
+      { id: 'stem', name: 'Stem', note: 'LEAF STEM', type: 'path', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'grad', grad: 'stemGrad', op: 1 },
+        w: 10, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 42, 488), seg('C', 62, 468, 85, 442, 115, 415) ] },
+
+      { id: 'lowerBlade', name: 'Lower blade', note: 'LOWER HALF OF LEAF BLADE', type: 'path', on: true,
+        fill: { mode: 'grad', grad: 'lowerBladeGrad', op: 1 }, stroke: { mode: 'none' },
+        w: 1, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 110, 420), seg('Q', 235, 260, 390, 70),
+                seg('C', 360, 310, 230, 450, 110, 420), Z() ] },
+
+      { id: 'upperBlade', name: 'Upper blade', note: 'UPPER HALF OF LEAF BLADE', type: 'path', on: true,
+        fill: { mode: 'grad', grad: 'upperBladeGrad', op: 1 }, stroke: { mode: 'none' },
+        w: 1, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 110, 420), seg('C', 70, 270, 180, 110, 390, 70),
+                seg('Q', 235, 260, 110, 420), Z() ] },
+
+      { id: 'sheen', name: 'Sheen highlight', note: 'SOFT LUMINOUS HIGHLIGHT (Upper Blade Sheen)',
+        type: 'path', on: true, fill: { mode: 'none' },
+        stroke: { mode: 'grad', grad: 'highlightGlow', op: 1 },
+        w: 22, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: true,
+        segs: [ seg('M', 125, 405), seg('Q', 210, 265, 330, 135) ] },
+
+      { id: 'veinsLower', name: 'Veins — lower', note: 'SECONDARY VEINS - LOWER HALF', type: 'group', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'solid', color: '#e1ffbe', op: 0.55 },
+        w: 2.2, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        kids: [
+          { id: 'vl1', name: 'Vein L1', on: true, segs: [ seg('M', 155, 365), seg('Q', 200, 392, 248, 408) ] },
+          { id: 'vl2', name: 'Vein L2', on: true, segs: [ seg('M', 215, 285), seg('Q', 275, 320, 325, 328) ] },
+          { id: 'vl3', name: 'Vein L3', on: true, segs: [ seg('M', 285, 200), seg('Q', 338, 230, 372, 222) ] },
+          { id: 'vl4', name: 'Vein L4', on: true, segs: [ seg('M', 340, 132), seg('Q', 370, 150, 386, 138) ] } ] },
+
+      { id: 'veinsUpper', name: 'Veins — upper', note: 'SECONDARY VEINS - UPPER HALF', type: 'group', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'solid', color: '#f0ffd2', op: 0.75 },
+        w: 2.4, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        kids: [
+          { id: 'vu1', name: 'Vein U1', on: true, segs: [ seg('M', 148, 375), seg('Q', 120, 350, 150, 50) ] },
+          { id: 'vu2', name: 'Vein U2', on: true, segs: [ seg('M', 202, 302), seg('Q', 196, 232, 232, 178) ] },
+          { id: 'vu3', name: 'Vein U3', on: true, segs: [ seg('M', 240, 255), seg('Q', 215, 200, 250, 80) ] },
+          { id: 'vu4', name: 'Vein U4', on: true, segs: [ seg('M', 268, 222), seg('Q', 250, 150, 280, 100) ] },
+          { id: 'vu5', name: 'Vein U5', on: true, segs: [ seg('M', 332, 142), seg('Q', 342, 112, 362, 90) ] } ] },
+
+      { id: 'midribShadow', name: 'Midrib shadow', note: 'MAIN MIDRIB — base shadow line for depth',
+        type: 'path', on: true, fill: { mode: 'none' },
+        stroke: { mode: 'solid', color: '#0d5d0e', op: 1 },
+        w: 4.5, cap: 'round', join: 'round', op: 0.3, tx: 0.5, ty: 1, blur: false,
+        segs: [ seg('M', 110, 420), seg('Q', 200, 230, 390, 70) ] },
+
+      { id: 'midrib', name: 'Midrib', note: 'MAIN MIDRIB — body', type: 'path', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'grad', grad: 'midribGrad', op: 1 },
+        w: 3.8, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 110, 420), seg('Q', 200, 230, 390, 70) ] },
+
+      { id: 'midribLight', name: 'Midrib highlight', note: 'MAIN MIDRIB — top highlight line',
+        type: 'path', on: true, fill: { mode: 'none' },
+        stroke: { mode: 'solid', color: '#ffffe6', op: 0.65 },
+        w: 1.2, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [ seg('M', 112, 418), seg('Q', 200, 230, 388, 71) ] }
+    ]
+  };
+}
+
+/* ------------------------------------------------------------ path math */
+const NPTS = { M: 1, L: 1, Q: 2, C: 3, Z: 0 };
+function segsToD(segs) {
+  return segs.map(s => s.type === 'Z' ? 'Z'
+    : s.type + ' ' + s.pts.map(p => r2(p[0]) + ' ' + r2(p[1])).join(' ')).join(' ');
+}
+/* Full SVG path parser: relative commands, H/V, S/T shorthand and A arcs
+   are all normalised into absolute M / L / Q / C / Z segments. */
+function parseD(d) {
+  const toks = String(d).match(/[astvzqmhlcASTVZQMHLC]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g) || [];
+  const out = []; let i = 0, cmd = '', cur = [0, 0], sub = [0, 0], pC = null, pQ = null;
+  const n = () => parseFloat(toks[i++]);
+  const put = (t, ...pts) => out.push({ type: t, pts });
+  while (i < toks.length) {
+    if (/[a-zA-Z]/.test(toks[i])) cmd = toks[i++];
+    else if (cmd === 'M') cmd = 'L';
+    else if (cmd === 'm') cmd = 'l';
+    if (!cmd || i > toks.length) break;
+    const rel = cmd >= 'a', C = cmd.toUpperCase();
+    const X = v => rel ? cur[0] + v : v, Y = v => rel ? cur[1] + v : v;
+    if (C === 'M') { const p = [X(n()), Y(n())]; put('M', p); cur = p.slice(); sub = p.slice(); pC = pQ = null; }
+    else if (C === 'L') { const p = [X(n()), Y(n())]; put('L', p); cur = p.slice(); pC = pQ = null; }
+    else if (C === 'H') { const p = [X(n()), cur[1]]; put('L', p); cur = p.slice(); pC = pQ = null; }
+    else if (C === 'V') { const p = [cur[0], Y(n())]; put('L', p); cur = p.slice(); pC = pQ = null; }
+    else if (C === 'C') {
+      const c1 = [X(n()), Y(n())], c2 = [X(n()), Y(n())], p = [X(n()), Y(n())];
+      put('C', c1, c2, p); pC = c2; pQ = null; cur = p.slice();
+    } else if (C === 'S') {
+      const r = pC ? [2 * cur[0] - pC[0], 2 * cur[1] - pC[1]] : cur.slice();
+      const c2 = [X(n()), Y(n())], p = [X(n()), Y(n())];
+      put('C', r, c2, p); pC = c2; pQ = null; cur = p.slice();
+    } else if (C === 'Q') {
+      const c = [X(n()), Y(n())], p = [X(n()), Y(n())];
+      put('Q', c, p); pQ = c; pC = null; cur = p.slice();
+    } else if (C === 'T') {
+      const r = pQ ? [2 * cur[0] - pQ[0], 2 * cur[1] - pQ[1]] : cur.slice();
+      const p = [X(n()), Y(n())];
+      put('Q', r, p); pQ = r; pC = null; cur = p.slice();
+    } else if (C === 'A') {
+      const rx = n(), ry = n(), rot = n(), laf = n(), sf = n(), p = [X(n()), Y(n())];
+      arcToCubics(cur, rx, ry, rot, laf, sf, p).forEach(c => put('C', c[0], c[1], c[2]));
+      cur = p.slice(); pC = pQ = null;
+    } else if (C === 'Z') { put('Z'); cur = sub.slice(); pC = pQ = null; }
+    else { i++; }
+  }
+  if (out.length && out[0].type !== 'M') out[0] = { type: 'M', pts: [out[0].pts[out[0].pts.length - 1] || [0, 0]] };
+  return out.length ? out : [seg('M', 100, 100), seg('C', 160, 60, 240, 60, 300, 100)];
+}
+
+/* Elliptical arc -> up to four cubic bezier segments (SVG spec F.6.1) */
+function arcToCubics(p0, rx, ry, rot, laf, sf, p1) {
+  if (!rx || !ry) return [[p0.slice(), p1.slice(), p1.slice()]];
+  const rad = rot * Math.PI / 180, cs = Math.cos(rad), sn = Math.sin(rad);
+  const dx = (p0[0] - p1[0]) / 2, dy = (p0[1] - p1[1]) / 2;
+  const x1 = cs * dx + sn * dy, y1 = -sn * dx + cs * dy;
+  rx = Math.abs(rx); ry = Math.abs(ry);
+  const lam = (x1 * x1) / (rx * rx) + (y1 * y1) / (ry * ry);
+  if (lam > 1) { const s = Math.sqrt(lam); rx *= s; ry *= s; }
+  const den = rx * rx * y1 * y1 + ry * ry * x1 * x1;
+  let q = den ? (rx * rx * ry * ry - den) / den : 0;
+  q = Math.sqrt(Math.max(0, q)) * (laf !== sf ? 1 : -1);
+  const cx1 = q * rx * y1 / ry, cy1 = -q * ry * x1 / rx;
+  const cx = cs * cx1 - sn * cy1 + (p0[0] + p1[0]) / 2;
+  const cy = sn * cx1 + cs * cy1 + (p0[1] + p1[1]) / 2;
+  const ang = (ux, uy, vx, vy) => {
+    const s = (ux * vy - uy * vx < 0 ? -1 : 1);
+    const c = (ux * vx + uy * vy) / (Math.hypot(ux, uy) * Math.hypot(vx, vy) || 1);
+    return s * Math.acos(Math.min(1, Math.max(-1, c)));
+  };
+  const ux = (x1 - cx1) / rx, uy = (y1 - cy1) / ry, vx = (-x1 - cx1) / rx, vy = (-y1 - cy1) / ry;
+  let th = ang(1, 0, ux, uy), dth = ang(ux, uy, vx, vy);
+  if (!sf && dth > 0) dth -= 2 * Math.PI;
+  if (sf && dth < 0) dth += 2 * Math.PI;
+  const nSeg = Math.max(1, Math.ceil(Math.abs(dth / (Math.PI / 2))));
+  const step = dth / nSeg, k = 4 / 3 * Math.tan(step / 4), res = [];
+  const E = t => [cs * rx * Math.cos(t) - sn * ry * Math.sin(t) + cx, sn * rx * Math.cos(t) + cs * ry * Math.sin(t) + cy];
+  const dE = t => [-cs * rx * Math.sin(t) - sn * ry * Math.cos(t), -sn * rx * Math.sin(t) + cs * ry * Math.cos(t)];
+  for (let s = 0; s < nSeg; s++) {
+    const t2 = th + step, A = E(th), B = E(t2), dA = dE(th), dB = dE(t2);
+    res.push([[A[0] + k * dA[0], A[1] + k * dA[1]], [B[0] - k * dB[0], B[1] - k * dB[1]], B]);
+    th = t2;
+  }
+  return res;
+}
+function pathOf(item, kid) { return kid ? kid.segs : item.segs; }
+function allPts(segs) { const a = []; segs.forEach((s, si) => s.pts.forEach((p, pi) => a.push({ si, pi, p }))); return a; }
+function bbox(segs) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  allPts(segs).forEach(({ p }) => { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); });
+  return x1 < x0 ? { x0: 0, y0: 0, x1: 0, y1: 0 } : { x0, y0, x1, y1 };
+}
+function movePath(segs, dx, dy) { allPts(segs).forEach(({ p }) => { p[0] += dx; p[1] += dy; }); }
+function mapPath(segs, fn) { allPts(segs).forEach(({ p }) => { const [x, y] = fn(p[0], p[1]); p[0] = x; p[1] = y; }); }
+function prevAnchor(segs, si) {
+  for (let i = si - 1; i >= 0; i--) if (segs[i].pts.length) return segs[i].pts[segs[i].pts.length - 1];
+  return segs[0] && segs[0].pts[0] ? segs[0].pts[0] : [0, 0];
+}
+function convertSeg(segs, i, to) {
+  const s = segs[i]; if (s.type === to) return;
+  const a = prevAnchor(segs, i);
+  const end = s.pts.length ? s.pts[s.pts.length - 1] : [a[0] + 60, a[1] - 40];
+  const lerp = t => [a[0] + (end[0] - a[0]) * t, a[1] + (end[1] - a[1]) * t];
+  if (to === 'Z') { s.type = 'Z'; s.pts = []; return; }
+  if (to === 'M' || to === 'L') { s.type = to; s.pts = [end]; return; }
+  if (to === 'Q') {
+    const c = s.type === 'C' ? [(s.pts[0][0] + s.pts[1][0]) / 2, (s.pts[0][1] + s.pts[1][1]) / 2] : lerp(0.5);
+    s.type = 'Q'; s.pts = [c, end]; return;
+  }
+  if (to === 'C') {
+    let c1, c2;
+    if (s.type === 'Q') { const q = s.pts[0];
+      c1 = [a[0] + 2 / 3 * (q[0] - a[0]), a[1] + 2 / 3 * (q[1] - a[1])];
+      c2 = [end[0] + 2 / 3 * (q[0] - end[0]), end[1] + 2 / 3 * (q[1] - end[1])];
+    } else { c1 = lerp(1 / 3); c2 = lerp(2 / 3); }
+    s.type = 'C'; s.pts = [c1, c2, end];
+  }
+}
+
+/* ==== state.js ====================================================== */
+/* state.js - what is selected, undo history, persistence
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+/* ---------------------------------------------------------------- state */
+const LS = 'svgStudio.v1';
+const LS_OLD = 'leafStudio.v1';   // work saved under the old name still loads
+let model = load() || original();
+let sel = { i: 0, k: null };          // selected item index / kid index
+let selSeg = -1;                      // highlighted segment row
+
+/* `model`, `sel` and `selSeg` are reassigned from other modules, which ES
+   modules only allow through setters — reads stay live everywhere. */
+function setModel(m) { model = m; }
+function setSel(s) { sel = s; }
+function setSelSeg(v) { selSeg = v; }
+function cancelSnapshot() { pending = null; }
+
+/* main.js registers the composite renderer; keeping it injected avoids a
+   cycle between state -> panel -> state */
+let _render = () => {};
+function setRenderer(fn) { _render = fn; }
+function renderAll() { _render(); }
+let view = { z: 1, x: 0, y: 0 };
+let opts = { allHandles: false, snap: false, tab: 'el', handleMode: 'auto', codeMode: 'svg' };
+let undoStack = [];
+let redoStack = [];
+let pending = null;
+
+
+function load() {
+  try {
+    const s = localStorage.getItem(LS) || localStorage.getItem(LS_OLD);
+    return s ? JSON.parse(s) : null;
+  } catch (e) { return null; }
+}
+function save() { try { localStorage.setItem(LS, JSON.stringify(model)); } catch (e) {} }
+
+function snapshot() { pending = clone(model); }
+function commit() {
+  if (!pending) return;
+  if (JSON.stringify(pending) !== JSON.stringify(model)) {
+    undoStack.push(pending); if (undoStack.length > 120) undoStack.shift();
+    redoStack.length = 0;
+  }
+  pending = null; save(); syncUndoBtns();
+}
+function edit(fn) { snapshot(); fn(); commit(); renderAll(); }
+function undo() { if (!undoStack.length) return; redoStack.push(clone(model)); model = undoStack.pop(); clampSel(); save(); renderAll(); syncUndoBtns(); }
+function redo() { if (!redoStack.length) return; undoStack.push(clone(model)); model = redoStack.pop(); clampSel(); save(); renderAll(); syncUndoBtns(); }
+function syncUndoBtns() { $('#bUndo').disabled = !undoStack.length; $('#bRedo').disabled = !redoStack.length; }
+function clampSel() {
+  if (sel.i >= model.items.length) setSel({ i: Math.max(0, model.items.length - 1), k: null });
+  const it = model.items[sel.i];
+  if (sel.k != null && (!it || !it.kids || sel.k >= it.kids.length)) sel.k = null;
+}
+
+/* ==== geometry.js =================================================== */
+/* geometry.js - flattening, variable-width outlines, curve splitting
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+/* ===================== variable width (taper) geometry ===================== */
+const r1 = n => Math.round(n * 10) / 10;
+const lerpP = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+function bezQ(p0, p1, p2, t) {
+  const u = 1 - t;
+  return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]];
+}
+function bezC(p0, p1, p2, p3, t) {
+  const u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+  return [a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]];
+}
+function ctrlLen(pts) {
+  let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  return L;
+}
+/* walk a path as a polyline; each curve gets a step count based on its length */
+function flattenPath(segs) {
+  const out = []; let cur = null, sub = null;
+  const add = p => {
+    const last = out[out.length - 1];
+    if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) > 1e-6) out.push([p[0], p[1]]);
+  };
+  segs.forEach(s => {
+    if (s.type === 'M') { cur = s.pts[0]; sub = cur; add(cur); }
+    else if (s.type === 'L') { add(s.pts[0]); cur = s.pts[0]; }
+    else if (s.type === 'Q' && cur) {
+      const n = Math.max(6, Math.min(40, Math.round(ctrlLen([cur, s.pts[0], s.pts[1]]) / 3)));
+      for (let i = 1; i <= n; i++) add(bezQ(cur, s.pts[0], s.pts[1], i / n));
+      cur = s.pts[1];
+    } else if (s.type === 'C' && cur) {
+      const n = Math.max(6, Math.min(40, Math.round(ctrlLen([cur, s.pts[0], s.pts[1], s.pts[2]]) / 3)));
+      for (let i = 1; i <= n; i++) add(bezC(cur, s.pts[0], s.pts[1], s.pts[2], i / n));
+      cur = s.pts[2];
+    } else if (s.type === 'Z' && sub) { add(sub); cur = sub; }
+  });
+  return out;
+}
+/* drop points that sit (almost) on the line between their neighbours */
+function simplify(pts, tol) {
+  if (pts.length < 3) return pts;
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const a = out[out.length - 1], b = pts[i], c = pts[i + 1];
+    const dx = c[0] - a[0], dy = c[1] - a[1], L = Math.hypot(dx, dy) || 1;
+    if (Math.abs((b[0] - a[0]) * dy - (b[1] - a[1]) * dx) / L > tol) out.push(b);
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+/* Turning varying width on must not change how the line looks: both ends
+   start at the width it already had, and you pull each one from there. */
+function defaultTaper(w) {
+  const v = w || 3;
+  return { on: true, stops: [{ t: 0, w: v }, { t: 1, w: v }] };
+}
+
+/* Where is the line at position t (0..1 by length), and which way is
+   "sideways"? Used to place and drag the width handles. */
+function sampleAtT(segs, t) {
+  const pts = flattenPath(segs);
+  if (pts.length < 2) return null;
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) {
+    cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  }
+  const total = cum[cum.length - 1] || 1;
+  const want = Math.max(0, Math.min(1, t)) * total;
+  let i = 1;
+  while (i < cum.length - 1 && cum[i] < want) i++;
+  const span = (cum[i] - cum[i - 1]) || 1;
+  const u = Math.max(0, Math.min(1, (want - cum[i - 1]) / span));
+  const a = pts[i - 1], b = pts[i];
+  const p = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const tan = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  return { p, tan, nor: [-tan[1], tan[0]], total };
+}
+
+/* Turn a drag near the line into { width, t } for one width stop. */
+function widthFromDrag(segs, t, mouse) {
+  const s = sampleAtT(segs, t);
+  if (!s) return null;
+  const dx = mouse[0] - s.p[0], dy = mouse[1] - s.p[1];
+  const along = dx * s.tan[0] + dy * s.tan[1];
+  const across = dx * s.nor[0] + dy * s.nor[1];
+  return { w: Math.max(0, Math.abs(across) * 2), dt: along / (s.total || 1) };
+}
+/* width of the line at position t (0 = start, 1 = end) */
+function widthAt(stops, t) {
+  const s = stops.slice().sort((a, b) => a.t - b.t);
+  if (!s.length) return 1;
+  if (t <= s[0].t) return s[0].w;
+  if (t >= s[s.length - 1].t) return s[s.length - 1].w;
+  for (let i = 1; i < s.length; i++) {
+    if (t <= s[i].t) {
+      const span = (s[i].t - s[i - 1].t) || 1, u = (t - s[i - 1].t) / span;
+      const e = u * u * (3 - 2 * u);           // smoothstep, so width changes read as organic
+      return s[i - 1].w + (s[i].w - s[i - 1].w) * e;
+    }
+  }
+  return s[s.length - 1].w;
+}
+/* the centreline + a width profile -> a closed outline that can be filled */
+function taperOutline(segs, taper) {
+  const pts = flattenPath(segs);
+  if (pts.length < 2) return segsToD(segs);
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const total = cum[cum.length - 1] || 1;
+  const L = [], R = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let tx = b[0] - a[0], ty = b[1] - a[1];
+    const len = Math.hypot(tx, ty) || 1; tx /= len; ty /= len;
+    const hw = Math.max(0, widthAt(taper.stops, cum[i] / total)) / 2;
+    L.push([p[0] - ty * hw, p[1] + tx * hw]);
+    R.push([p[0] + ty * hw, p[1] - tx * hw]);
+  }
+  const l = simplify(L, 0.12), rr = simplify(R, 0.12).reverse();
+  const fmt = p => r1(p[0]) + ' ' + r1(p[1]);
+  return 'M ' + fmt(l[0]) + ' L ' + l.slice(1).map(fmt).join(' L ') +
+         ' L ' + rr.map(fmt).join(' L ') + ' Z';
+}
+
+/* ===================== adding a point mid-curve ===================== */
+/* split a segment at parameter t, keeping the drawn shape identical */
+function splitSeg(segs, si, t) {
+  const s = segs[si], a = prevAnchor(segs, si);
+  t = Math.min(0.92, Math.max(0.08, t));
+  if (s.type === 'L') {
+    segs.splice(si, 0, { type: 'L', pts: [lerpP(a, s.pts[0], t)] }); return true;
+  }
+  if (s.type === 'Q') {
+    const p1 = s.pts[0], p2 = s.pts[1];
+    const q0 = lerpP(a, p1, t), q1 = lerpP(p1, p2, t), mid = lerpP(q0, q1, t);
+    segs.splice(si, 1, { type: 'Q', pts: [q0, mid] }, { type: 'Q', pts: [q1, p2] }); return true;
+  }
+  if (s.type === 'C') {
+    const p1 = s.pts[0], p2 = s.pts[1], p3 = s.pts[2];
+    const a1 = lerpP(a, p1, t), a2 = lerpP(p1, p2, t), a3 = lerpP(p2, p3, t);
+    const b1 = lerpP(a1, a2, t), b2 = lerpP(a2, a3, t), mid = lerpP(b1, b2, t);
+    segs.splice(si, 1, { type: 'C', pts: [a1, b1, mid] }, { type: 'C', pts: [b2, a3, p3] }); return true;
+  }
+  return false;
+}
+/* which segment (and where along it) is nearest to a clicked point */
+function nearestOnPath(segs, pt) {
+  let best = { si: -1, t: 0.5, d: Infinity };
+  let cur = null;
+  segs.forEach((s, si) => {
+    const test = (p, t) => {
+      const d = Math.hypot(p[0] - pt[0], p[1] - pt[1]);
+      if (d < best.d) best = { si, t, d };
+    };
+    if (s.type === 'M') { cur = s.pts[0]; return; }
+    if (!cur) return;
+    const N = 24;
+    if (s.type === 'L') { for (let i = 1; i < N; i++) test(lerpP(cur, s.pts[0], i / N), i / N); cur = s.pts[0]; }
+    else if (s.type === 'Q') { for (let i = 1; i < N; i++) test(bezQ(cur, s.pts[0], s.pts[1], i / N), i / N); cur = s.pts[1]; }
+    else if (s.type === 'C') { for (let i = 1; i < N; i++) test(bezC(cur, s.pts[0], s.pts[1], s.pts[2], i / N), i / N); cur = s.pts[2]; }
+  });
+  return best;
+}
+
+/* ==== render.js ===================================================== */
+/* render.js - model -> live SVG, layer list, handles
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+const art = $('#art'), vp = $('#viewport');
+
+/* ------------------------------------------------------------ svg build */
+function paint(kind, p) {
+  if (!p || p.mode === 'none') return kind + '="none"';
+  const v = p.mode === 'grad' ? 'url(#' + p.grad + ')' : (p.color || '#000');
+  let s = kind + '="' + v + '"';
+  if (p.op != null && p.op < 1) s += ' ' + kind + '-opacity="' + r2(p.op) + '"';
+  return s;
+}
+function commonAttrs(it) {
+  let a = paint('fill', it.fill) + ' ' + paint('stroke', it.stroke);
+  if (it.stroke && it.stroke.mode !== 'none') {
+    a += ' stroke-width="' + r2(it.w) + '" stroke-linecap="' + it.cap + '"';
+    if (it.fill && it.fill.mode !== 'none') a += ' stroke-linejoin="' + it.join + '"';
+  }
+  if (it.op < 1) a += ' opacity="' + r2(it.op) + '"';
+  if (it.tx || it.ty) a += ' transform="translate(' + r2(it.tx) + ', ' + r2(it.ty) + ')"';
+  if (it.blur) a += ' filter="url(#blurHighlight)"';
+  return a;
+}
+/* a tapered line becomes a filled ribbon, so its stroke paint becomes the fill */
+function taperAttrs(it) {
+  let a = paint('fill', it.stroke.mode === 'none' ? it.fill : it.stroke) + ' stroke="none"';
+  if (it.op < 1) a += ' opacity="' + r2(it.op) + '"';
+  if (it.tx || it.ty) a += ' transform="translate(' + r2(it.tx) + ', ' + r2(it.ty) + ')"';
+  if (it.blur) a += ' filter="url(#blurHighlight)"';
+  return a;
+}
+function defsSVG() {
+  let s = '';
+  model.gradients.forEach(g => { s += gradTag(g, ''); });
+  s += '<filter id="blurHighlight" x="-20%" y="-20%" width="140%" height="140%">' +
+       '<feGaussianBlur stdDeviation="' + model.doc.blurStd + '"/></filter>';
+  return s;
+}
+/* one <linearGradient>/<radialGradient> element, optionally pretty-printed */
+function gradTag(g, pad) {
+  const nl = pad ? '\n' : '', p2 = pad ? pad + '  ' : '';
+  const stops = g.stops.map(st => p2 + '<stop offset="' + st.off + '%" stop-color="' + st.color + '"' +
+    (st.op < 1 ? ' stop-opacity="' + st.op + '"' : '') + (pad ? ' />' : '/>')).join(nl);
+  if (g.kind === 'radial') {
+    return pad + '<radialGradient id="' + g.id + '" cx="' + g.cx + '%" cy="' + g.cy + '%" r="' + g.r + '%">' +
+      nl + stops + nl + pad + '</radialGradient>';
+  }
+  return pad + '<linearGradient id="' + g.id + '" x1="' + g.x1 + '%" y1="' + g.y1 + '%" x2="' + g.x2 + '%" y2="' + g.y2 + '%">' +
+    nl + stops + nl + pad + '</linearGradient>';
+}
+/* a path drawn with a varying width is exported as a filled outline */
+function isTapered(it) { return !!(it.taper && it.taper.on); }
+function drawD(it, segs) { return isTapered(it) ? taperOutline(segs, it.taper) : segsToD(segs); }
+function itemSVG(it, ii) {
+  if (!it.on) return '';
+  const tap = isTapered(it);
+  if (it.type === 'group') {
+    let s = '<g ' + (tap ? taperAttrs(it) : commonAttrs(it)) + ' data-i="' + ii + '">';
+    it.kids.forEach((k, ki) => {
+      if (k.on) s += '<path d="' + drawD(it, k.segs) + '" data-i="' + ii + '" data-k="' + ki + '"/>';
+    });
+    return s + '</g>';
+  }
+  return '<path d="' + drawD(it, it.segs) + '" ' + (tap ? taperAttrs(it) : commonAttrs(it)) +
+    ' data-i="' + ii + '"/>';
+}
+function hitSVG() {
+  let s = '';
+  model.items.forEach((it, ii) => {
+    if (!it.on) return;
+    const fillable = (it.fill && it.fill.mode !== 'none') || isTapered(it);
+    const sw = Math.max(it.w || 1, 14 / view.z);
+    const wrap = (d, ki) => '<path class="hitp" d="' + d + '" fill="' + (fillable ? 'transparent' : 'none') +
+      '" stroke-width="' + sw + '" data-i="' + ii + '"' + (ki != null ? ' data-k="' + ki + '"' : '') +
+      (it.tx || it.ty ? ' transform="translate(' + it.tx + ',' + it.ty + ')"' : '') + '/>';
+    if (it.type === 'group') it.kids.forEach((k, ki) => { if (k.on) s += wrap(drawD(it, k.segs), ki); });
+    else s += wrap(drawD(it, it.segs), null);
+  });
+  return s;
+}
+/* relative luminance of a #rrggbb colour, 0 (black) .. 1 (white) */
+function lumOf(hex) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return 1;
+  const n = parseInt(hex.slice(1), 16);
+  const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f((n >> 16) & 255) + 0.7152 * f((n >> 8) & 255) + 0.0722 * f(n & 255);
+}
+/* what is behind the handles of this item? drives the light/dark handle scheme */
+function backdropOf(it) {
+  const pick = p => {
+    if (!p || p.mode === 'none') return null;
+    if (p.mode === 'solid') return p.color;
+    const g = byId(p.grad);
+    return g && g.stops.length ? g.stops[Math.floor(g.stops.length / 2)].color : null;
+  };
+  return (it && (pick(it.fill) || pick(it.stroke))) || model.doc.pageBg || '#ffffff';
+}
+/* anchors stay green (readable either way); the bend handles flip black/white
+   so they never disappear into the artwork */
+function handleTheme(it) {
+  const mode = opts.handleMode || 'auto';
+  const darkBack = mode === 'auto' ? lumOf(backdropOf(it)) < 0.45 : mode === 'light';
+  return darkBack
+    ? { ctrlFill: '#ffffff', ctrlRing: '#101010', anchorFill: '#8ee32a', anchorRing: '#0b0f0d', conn: 'rgba(255,255,255,0.85)' }
+    : { ctrlFill: '#000000', ctrlRing: '#ffffff', anchorFill: '#8ee32a', anchorRing: '#0b0f0d', conn: 'rgba(0,0,0,0.65)' };
+}
+function overlaySVG() {
+  const k = 1 / view.z, R = 5.5 * k, CR = 3.9 * k, SW = 1.4 * k;
+  let s = '';
+  const targets = [];
+  model.items.forEach((it, ii) => {
+    const isSel = sel.i === ii;
+    if (!it.on) return;
+    if (!opts.allHandles && !isSel) return;
+    if (it.type === 'group') {
+      it.kids.forEach((kd, ki) => {
+        if (!kd.on) return;
+        const kidSel = isSel && (sel.k === ki || sel.k === null);
+        if (!opts.allHandles && !kidSel) return;
+        targets.push({ it, ii, kd, ki, hot: isSel && sel.k === ki });
+      });
+    } else targets.push({ it, ii, kd: null, ki: null, hot: isSel });
+  });
+  targets.forEach(t => {
+    const segs = t.kd ? t.kd.segs : t.it.segs;
+    const off = 'translate(' + (t.it.tx || 0) + ',' + (t.it.ty || 0) + ')';
+    const th = handleTheme(t.it);
+    let g = '<g transform="' + off + '">';
+    if (t.hot) g += '<path class="ghost" d="' + segsToD(segs) + '" stroke-width="' + (1.2 * k) + '"/>';
+    segs.forEach((sg, si) => {
+      if (!sg.pts.length) return;
+      const a = prevAnchor(segs, si);
+      sg.pts.forEach((p, pi) => {
+        const isAnchor = pi === sg.pts.length - 1 || sg.type === 'M';
+        if (!isAnchor) {
+          const from = (sg.type === 'C' && pi === 1) ? sg.pts[2] : a;
+          g += '<line class="conn" x1="' + from[0] + '" y1="' + from[1] + '" x2="' + p[0] + '" y2="' + p[1] +
+               '" stroke="' + th.conn + '" stroke-width="' + SW * 0.8 + '" stroke-dasharray="' + 3 * k + ' ' + 3 * k + '"/>';
+        }
+        g += '<circle class="' + (isAnchor ? 'anchor' : 'ctrl') + (t.hot ? ' hot' : '') + '" cx="' + p[0] + '" cy="' + p[1] +
+             '" r="' + (isAnchor ? R : CR) + '"' +
+             ' fill="' + (isAnchor ? th.anchorFill : th.ctrlFill) + '"' +
+             ' stroke="' + (isAnchor ? th.anchorRing : th.ctrlRing) + '" stroke-width="' + SW + '"' +
+             ' data-i="' + t.ii + '"' + (t.ki != null ? ' data-k="' + t.ki + '"' : '') +
+             ' data-s="' + si + '" data-p="' + pi + '"/>';
+      });
+    });
+    s += g + '</g>';
+  });
+  s += widthHandlesSVG(k);
+  return s;
+}
+
+/* Square handles that sit either side of a line with varying width. Drag one
+   away from the line to fatten that end, towards it to thin it — each stop
+   moves on its own, so the two ends are independent. */
+function widthHandlesSVG(k) {
+  const it = model.items[sel.i];
+  if (!it || !it.on || !isTapered(it)) return '';
+  const holder = it.type === 'group'
+    ? (it.kids[sel.k != null ? sel.k : 0] || null)
+    : it;
+  if (!holder || holder.on === false) return '';
+  const th = handleTheme(it);
+  const HS = 4.4 * k, SW = 1.4 * k;
+  let s = '<g transform="translate(' + (it.tx || 0) + ',' + (it.ty || 0) + ')">';
+  it.taper.stops.forEach((st, si) => {
+    const at = sampleAtT(holder.segs, st.t);
+    if (!at) return;
+    const hw = Math.max(st.w, 0.6) / 2;
+    [1, -1].forEach(side => {
+      const x = at.p[0] + at.nor[0] * hw * side, y = at.p[1] + at.nor[1] * hw * side;
+      s += '<line x1="' + at.p[0] + '" y1="' + at.p[1] + '" x2="' + x + '" y2="' + y +
+           '" stroke="' + th.conn + '" stroke-width="' + SW * 0.7 + '"/>';
+      s += '<rect class="whandle" x="' + (x - HS) + '" y="' + (y - HS) +
+           '" width="' + HS * 2 + '" height="' + HS * 2 + '" rx="' + HS * 0.35 +
+           '" fill="' + th.ctrlFill + '" stroke="' + th.ctrlRing + '" stroke-width="' + SW + '"' +
+           ' data-w="' + si + '"><title>width ' + r2(st.w) +
+           ' at ' + Math.round(st.t * 100) + '% — drag sideways to resize this end</title></rect>';
+    });
+  });
+  return s + '</g>';
+}
+
+/* ---------------------------------------------------------- render: art */
+let rafPending = false;
+function renderArt() {
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => {
+    rafPending = false;
+    const vb = model.doc.viewBox;
+    $('#defsHost').innerHTML = defsSVG();
+    $('#artHost').innerHTML = model.items.map(itemSVG).join('');
+    $('#hitHost').innerHTML = hitSVG();
+    $('#overlay').innerHTML = overlaySVG();
+    const bg = $('#bgRect');
+    bg.setAttribute('x', vb.x); bg.setAttribute('y', vb.y);
+    bg.setAttribute('width', vb.w); bg.setAttribute('height', vb.h);
+    bg.setAttribute('fill', model.doc.pageBg);
+    $('#viewport').setAttribute('transform', 'translate(' + view.x + ',' + view.y + ') scale(' + view.z + ')');
+    $('#hz').textContent = Math.round(view.z * 100) + '%';
+    $('#artHost').style.filter = model.doc.shadow.on
+      ? 'drop-shadow(' + model.doc.shadow.dx + 'px ' + model.doc.shadow.dy + 'px ' + model.doc.shadow.blur + 'px ' +
+        hexa(model.doc.shadow.color, model.doc.shadow.opacity) + ')' : 'none';
+  });
+}
+function hexa(hex, op) {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + op + ')';
+}
+
+/* ------------------------------------------------------- render: layers */
+function swatchOf(it) {
+  if (it.fill && it.fill.mode === 'solid') return it.fill.color;
+  if (it.fill && it.fill.mode === 'grad') return gradCss(byId(it.fill.grad));
+  if (it.stroke && it.stroke.mode === 'solid') return it.stroke.color;
+  if (it.stroke && it.stroke.mode === 'grad') return gradCss(byId(it.stroke.grad));
+  return '#334';
+}
+function byId(id) { return model.gradients.find(g => g.id === id); }
+function gradCss(g) {
+  if (!g) return '#334';
+  const stops = g.stops.map(s => s.color + ' ' + s.off + '%').join(',');
+  if (g.kind === 'radial') return 'radial-gradient(circle at ' + g.cx + '% ' + g.cy + '%,' + stops + ')';
+  const ang = (Math.atan2(g.y2 - g.y1, g.x2 - g.x1) * 180 / Math.PI) + 90;
+  return 'linear-gradient(' + r2(ang) + 'deg,' + stops + ')';
+}
+function renderLayers() {
+  const host = $('#layers'); let h = '';
+  model.items.forEach((it, ii) => {
+    const s = sel.i === ii && sel.k === null ? ' sel' : '';
+    h += '<div class="layer' + s + '" data-i="' + ii + '">' +
+      '<span class="eye' + (it.on ? '' : ' off') + '" data-eye="' + ii + '">' + (it.on ? '👁' : '🚫') + '</span>' +
+      '<span class="swatch" style="background:' + swatchOf(it) + '"></span>' +
+      '<span class="nm">' + esc(it.name) + '</span>' +
+      (it.type === 'group' ? '<span class="tag">' + it.kids.length + '</span>' : '') +
+      '<span class="mini" data-up="' + ii + '" title="Move up">▲</span>' +
+      '<span class="mini" data-down="' + ii + '" title="Move down">▼</span>' +
+      '<span class="mini" data-del="' + ii + '" title="Delete">✕</span></div>';
+    if (it.type === 'group' && (sel.i === ii || opts.allHandles)) {
+      it.kids.forEach((kd, ki) => {
+        const s2 = sel.i === ii && sel.k === ki ? ' sel' : '';
+        h += '<div class="layer child' + s2 + '" data-i="' + ii + '" data-k="' + ki + '">' +
+          '<span class="eye' + (kd.on ? '' : ' off') + '" data-eye="' + ii + '" data-eyek="' + ki + '">' + (kd.on ? '👁' : '🚫') + '</span>' +
+          '<span class="nm">' + esc(kd.name) + '</span>' +
+          '<span class="mini" data-dupk="' + ii + '_' + ki + '" title="Duplicate">⧉</span>' +
+          '<span class="mini" data-delk="' + ii + '_' + ki + '" title="Delete">✕</span></div>';
+      });
+    }
+  });
+  host.innerHTML = h;
+  const n = model.items.reduce((a, it) => a + 1 + (it.kids ? it.kids.length : 0), 0);
+  $('#layerCount').textContent = n + ' elements';
+}
+
+function fit() {
+  const r = art.getBoundingClientRect(), vb = model.doc.viewBox;
+  view.z = Math.min(r.width / vb.w, r.height / vb.h) * 0.88;
+  view.x = (r.width - vb.w * view.z) / 2 - vb.x * view.z;
+  view.y = (r.height - vb.h * view.z) / 2 - vb.y * view.z;
+  renderArt();
+}
+
+/* ==== svg-import.js ================================================= */
+/* svg-import.js - read any .svg file into the model
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+/* ============================ SVG import ============================ */
+function matMul(m, n) {
+  return [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1],
+          m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3],
+          m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+}
+function matApply(m, p) { return [m[0] * p[0] + m[2] * p[1] + m[4], m[1] * p[0] + m[3] * p[1] + m[5]]; }
+function parseTransform(str) {
+  let m = [1, 0, 0, 1, 0, 0];
+  const re = /(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)/g;
+  let f;
+  while ((f = re.exec(str || ''))) {
+    const v = (f[2].match(/[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g) || []).map(Number);
+    const D = Math.PI / 180;
+    if (f[1] === 'matrix' && v.length >= 6) m = matMul(m, v.slice(0, 6));
+    else if (f[1] === 'translate') m = matMul(m, [1, 0, 0, 1, v[0] || 0, v[1] || 0]);
+    else if (f[1] === 'scale') m = matMul(m, [v[0] || 1, 0, 0, v.length > 1 ? v[1] : (v[0] || 1), 0, 0]);
+    else if (f[1] === 'rotate') {
+      const c = Math.cos((v[0] || 0) * D), s = Math.sin((v[0] || 0) * D);
+      if (v.length >= 3) m = matMul(matMul(matMul(m, [1, 0, 0, 1, v[1], v[2]]), [c, s, -s, c, 0, 0]), [1, 0, 0, 1, -v[1], -v[2]]);
+      else m = matMul(m, [c, s, -s, c, 0, 0]);
+    } else if (f[1] === 'skewX') m = matMul(m, [1, 0, Math.tan((v[0] || 0) * D), 1, 0, 0]);
+    else if (f[1] === 'skewY') m = matMul(m, [1, Math.tan((v[0] || 0) * D), 0, 1, 0, 0]);
+  }
+  return m;
+}
+let _cvs = null;
+function normColor(v) {
+  v = String(v == null ? '' : v).trim();
+  if (!v || v === 'none' || v === 'transparent') return null;
+  if (/^#[0-9a-f]{3}$/i.test(v)) return ('#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]).toLowerCase();
+  if (/^#[0-9a-f]{6}$/i.test(v)) return v.toLowerCase();
+  if (/^#[0-9a-f]{8}$/i.test(v)) return v.slice(0, 7).toLowerCase();
+  try {
+    _cvs = _cvs || document.createElement('canvas').getContext('2d');
+    _cvs.fillStyle = '#000000'; _cvs.fillStyle = v;
+    const out = _cvs.fillStyle;
+    if (/^#[0-9a-f]{6}$/i.test(out)) return out.toLowerCase();
+    const m = /rgba?\(([^)]+)\)/.exec(out);
+    if (m) {
+      const p = m[1].split(',').map(parseFloat);
+      return '#' + [p[0], p[1], p[2]].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) {}
+  return '#000000';
+}
+const SVG_STYLE_KEYS = ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+  'opacity', 'fill-opacity', 'stroke-opacity'];
+function styleOf(el, inherited) {
+  const s = Object.assign({}, inherited);
+  SVG_STYLE_KEYS.forEach(k => { const v = el.getAttribute(k); if (v != null && v !== '') s[k] = v.trim(); });
+  const css = el.getAttribute('style');
+  if (css) css.split(';').forEach(part => {
+    const idx = part.indexOf(':'); if (idx < 0) return;
+    const k = part.slice(0, idx).trim(), v = part.slice(idx + 1).trim();
+    if (SVG_STYLE_KEYS.includes(k) && v) s[k] = v;
+  });
+  return s;
+}
+function toPaint(value, opacity, gradMap, fallback) {
+  const v = value == null ? fallback : value;
+  if (v == null || v === 'none' || v === 'transparent') return { mode: 'none' };
+  let op = opacity == null ? 1 : parseFloat(opacity);
+  if (!Number.isFinite(op)) op = 1;
+  op = Math.max(0, Math.min(1, op));
+  const m = /url\(\s*#([^)\s]+)\s*\)/.exec(v);
+  if (m) {
+    if (gradMap[m[1]]) return { mode: 'grad', grad: gradMap[m[1]], op };
+    return { mode: 'solid', color: '#888888', op };
+  }
+  const c = normColor(v);
+  return c ? { mode: 'solid', color: c, op } : { mode: 'none' };
+}
+function pctOf(v, dflt) {
+  if (v == null || v === '') return dflt;
+  const s = String(v).trim();
+  if (s.endsWith('%')) return r2(parseFloat(s));
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return dflt;
+  return r2(n <= 1 ? n * 100 : n);
+}
+function importGradients(svg, gradMap) {
+  const out = [], nodes = [...svg.querySelectorAll('linearGradient,radialGradient')];
+  const stopsOf = el => [...el.querySelectorAll('stop')].map(st => {
+    const sty = styleOf(el === st ? st : st, {});
+    let col = st.getAttribute('stop-color'), op = st.getAttribute('stop-opacity');
+    const css = st.getAttribute('style');
+    if (css) css.split(';').forEach(p => {
+      const i = p.indexOf(':'); if (i < 0) return;
+      const k = p.slice(0, i).trim(), v = p.slice(i + 1).trim();
+      if (k === 'stop-color') col = v; if (k === 'stop-opacity') op = v;
+    });
+    const o = op == null ? 1 : parseFloat(op);
+    return { off: pctOf(st.getAttribute('offset'), 0), color: normColor(col) || '#000000',
+             op: Number.isFinite(o) ? Math.max(0, Math.min(1, o)) : 1 };
+  });
+  nodes.forEach((el, idx) => {
+    const rawId = el.getAttribute('id'); if (!rawId) return;
+    let stops = stopsOf(el);
+    if (!stops.length) {                       // stops may live on a referenced gradient
+      const href = el.getAttribute('href') || el.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+      if (href && href.startsWith('#')) {
+        const src = svg.querySelector('[id="' + href.slice(1) + '"]');
+        if (src) stops = stopsOf(src);
+      }
+    }
+    if (stops.length < 2) stops = stops.length === 1
+      ? [stops[0], { off: 100, color: stops[0].color, op: stops[0].op }]
+      : [{ off: 0, color: '#cccccc', op: 1 }, { off: 100, color: '#666666', op: 1 }];
+    const id = /^[A-Za-z][\w.:-]*$/.test(rawId) ? rawId : 'grad' + idx;
+    const radial = el.tagName.toLowerCase() === 'radialgradient';
+    const g = { id, label: (el.getAttribute('id') || 'Gradient ' + (idx + 1)), kind: radial ? 'radial' : 'linear', stops };
+    if (radial) { g.cx = pctOf(el.getAttribute('cx'), 50); g.cy = pctOf(el.getAttribute('cy'), 50); g.r = pctOf(el.getAttribute('r'), 50); }
+    else {
+      g.x1 = pctOf(el.getAttribute('x1'), 0); g.y1 = pctOf(el.getAttribute('y1'), 0);
+      g.x2 = pctOf(el.getAttribute('x2'), 100); g.y2 = pctOf(el.getAttribute('y2'), 0);
+    }
+    gradMap[rawId] = id;
+    out.push(g);
+  });
+  return out;
+}
+function shapeToSegs(el, tag) {
+  const A = n => parseFloat(el.getAttribute(n) || 0);
+  const pl = () => (el.getAttribute('points') || '').trim()
+    .split(/[\s,]+/).map(Number).filter(Number.isFinite);
+  if (tag === 'path') { const d = el.getAttribute('d'); return d ? parseD(d) : null; }
+  if (tag === 'line') return [seg('M', A('x1'), A('y1')), seg('L', A('x2'), A('y2'))];
+  if (tag === 'polyline' || tag === 'polygon') {
+    const p = pl(); if (p.length < 4) return null;
+    const s = [seg('M', p[0], p[1])];
+    for (let i = 2; i + 1 < p.length; i += 2) s.push(seg('L', p[i], p[i + 1]));
+    if (tag === 'polygon') s.push(Z());
+    return s;
+  }
+  if (tag === 'rect') {
+    const x = A('x'), y = A('y'), w = A('width'), h = A('height');
+    if (!w || !h) return null;
+    let rx = Math.min(A('rx') || A('ry') || 0, w / 2), ry = Math.min(A('ry') || A('rx') || 0, h / 2);
+    if (!rx && !ry) return [seg('M', x, y), seg('L', x + w, y), seg('L', x + w, y + h), seg('L', x, y + h), Z()];
+    const k = 0.5523;
+    return [seg('M', x + rx, y), seg('L', x + w - rx, y),
+      seg('C', x + w - rx + rx * k, y, x + w, y + ry - ry * k, x + w, y + ry),
+      seg('L', x + w, y + h - ry),
+      seg('C', x + w, y + h - ry + ry * k, x + w - rx + rx * k, y + h, x + w - rx, y + h),
+      seg('L', x + rx, y + h),
+      seg('C', x + rx - rx * k, y + h, x, y + h - ry + ry * k, x, y + h - ry),
+      seg('L', x, y + ry),
+      seg('C', x, y + ry - ry * k, x + rx - rx * k, y, x + rx, y), Z()];
+  }
+  if (tag === 'circle' || tag === 'ellipse') {
+    const cx = A('cx'), cy = A('cy');
+    const rx = tag === 'circle' ? A('r') : A('rx'), ry = tag === 'circle' ? A('r') : A('ry');
+    if (!rx || !ry) return null;
+    const k = 0.5523;
+    return [seg('M', cx + rx, cy),
+      seg('C', cx + rx, cy + ry * k, cx + rx * k, cy + ry, cx, cy + ry),
+      seg('C', cx - rx * k, cy + ry, cx - rx, cy + ry * k, cx - rx, cy),
+      seg('C', cx - rx, cy - ry * k, cx - rx * k, cy - ry, cx, cy - ry),
+      seg('C', cx + rx * k, cy - ry, cx + rx, cy - ry * k, cx + rx, cy), Z()];
+  }
+  return null;
+}
+function walkSVG(el, inherited, mat, out, gradMap, skipped) {
+  [...el.children].forEach(ch => {
+    const tag = ch.tagName.toLowerCase();
+    if (['defs', 'lineargradient', 'radialgradient', 'title', 'desc', 'style', 'metadata',
+         'clippath', 'mask', 'filter', 'pattern', 'symbol', 'script'].includes(tag)) return;
+    const m2 = matMul(mat, parseTransform(ch.getAttribute('transform')));
+    const st = styleOf(ch, inherited);
+    if (tag === 'g' || tag === 'svg' || tag === 'a') { walkSVG(ch, st, m2, out, gradMap, skipped); return; }
+    const segs = shapeToSegs(ch, tag);
+    if (!segs || !segs.length) { skipped[tag] = (skipped[tag] || 0) + 1; return; }
+    mapPath(segs, (x, y) => matApply(m2, [x, y]));
+    const scale = Math.sqrt(Math.abs(m2[0] * m2[3] - m2[1] * m2[2])) || 1;
+    const sw = st['stroke-width'] == null ? 1 : parseFloat(st['stroke-width']);
+    const gop = st.opacity == null ? 1 : parseFloat(st.opacity);
+    out.push({
+      id: uid('el'),
+      name: ch.getAttribute('id') || (tag.charAt(0).toUpperCase() + tag.slice(1) + ' ' + (out.length + 1)),
+      note: tag.toUpperCase() + ' ' + (out.length + 1), type: 'path', on: true,
+      fill: toPaint(st.fill, st['fill-opacity'], gradMap, '#000000'),
+      stroke: toPaint(st.stroke, st['stroke-opacity'], gradMap, null),
+      w: r2(Math.max(0.1, (Number.isFinite(sw) ? sw : 1) * scale)),
+      cap: st['stroke-linecap'] || 'butt', join: st['stroke-linejoin'] || 'miter',
+      op: Number.isFinite(gop) ? Math.max(0, Math.min(1, gop)) : 1,
+      tx: 0, ty: 0, blur: false, segs
+    });
+  });
+}
+function importSVGText(text) {
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  if (doc.querySelector('parsererror')) throw new Error('That file is not valid SVG');
+  const svg = doc.querySelector('svg');
+  if (!svg) throw new Error('No <svg> element in that file');
+  const gradMap = {}, grads = importGradients(svg, gradMap);
+  const items = [], skipped = {};
+  walkSVG(svg, {}, [1, 0, 0, 1, 0, 0], items, gradMap, skipped);
+  if (!items.length) throw new Error('No drawable shapes found (text and images are not supported)');
+
+  let vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number).filter(Number.isFinite);
+  if (vb.length !== 4) {
+    const w = parseFloat(svg.getAttribute('width')) || 0, h = parseFloat(svg.getAttribute('height')) || 0;
+    if (w && h) vb = [0, 0, w, h];
+    else {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      items.forEach(it => { const b = bbox(it.segs); x0 = Math.min(x0, b.x0); y0 = Math.min(y0, b.y0); x1 = Math.max(x1, b.x1); y1 = Math.max(y1, b.y1); });
+      vb = [Math.floor(x0 - 8), Math.floor(y0 - 8), Math.ceil(x1 - x0 + 16), Math.ceil(y1 - y0 + 16)];
+    }
+  }
+  const title = (svg.querySelector('title') || {}).textContent;
+  setModel({
+    doc: { title: (title || 'Imported SVG').trim().slice(0, 80), pageBg: '#ffffff', maxWidth: 550,
+           viewBox: { x: r2(vb[0]), y: r2(vb[1]), w: r2(vb[2]), h: r2(vb[3]) },
+           shadow: { on: false, dx: 0, dy: 8, blur: 16, color: '#00280a', opacity: 0.06 }, blurStd: 6 },
+    gradients: grads.length ? grads : original().gradients.slice(0, 1),
+    items
+  });
+  setSel({ i: 0, k: null }); setSelSeg(-1);
+  const skips = Object.keys(skipped);
+  return { count: items.length, grads: grads.length, skipped: skips.map(k => skipped[k] + ' ' + k).join(', ') };
+}
+
+/* ==== io.js ========================================================= */
+/* io.js - loading a file from disk into the editor
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+function loadSVGFile(file) {
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    snapshot();
+    try {
+      const res = importSVGText(String(fr.result));
+      commit(); renderAll(); fit();
+      toast(res.count + ' shapes imported' + (res.grads ? ', ' + res.grads + ' gradients' : '') +
+        (res.skipped ? ' — skipped ' + res.skipped : ''));
+    } catch (err) { cancelSnapshot(); toast('Import failed: ' + err.message); }
+  };
+  fr.onerror = () => { toast('Could not read that file'); };
+  fr.readAsText(file);
+}
+
+/* ==== codegen.js ==================================================== */
+/* codegen.js - the model written back out as .svg or .html source
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+
+/* ------------------------------ code generation ---------------------------- */
+/* path data for the exported file: one line when short, otherwise one command
+   per line — except tapered outlines, which are chunked to stay readable */
+function dString(segs, raw) {
+  if (raw) {
+    const parts = raw.split(' L ');
+    if (raw.length <= 62) return [raw];
+    const out = []; let line = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      const nxt = 'L ' + parts[i];
+      if (line.length + nxt.length + 1 > 76) { out.push(line); line = nxt; }
+      else line += ' ' + nxt;
+    }
+    out.push(line);
+    return out;
+  }
+  const parts = segs.map(s => s.type === 'Z' ? 'Z'
+    : s.type + ' ' + s.pts.map(p => r2(p[0]) + ' ' + r2(p[1])).join(' '));
+  const one = parts.join(' ');
+  return one.length <= 62 ? [one] : parts;
+}
+function attrLines(it) {
+  const L = [];
+  if (isTapered(it)) {
+    L.push(paint('fill', it.stroke.mode === 'none' ? it.fill : it.stroke));
+  } else {
+    L.push(paint('fill', it.fill));
+    if (it.stroke.mode !== 'none') {
+      L.push(paint('stroke', it.stroke));
+      L.push('stroke-width="' + r2(it.w) + '"');
+      L.push('stroke-linecap="' + it.cap + '"');
+      if (it.fill.mode !== 'none') L.push('stroke-linejoin="' + it.join + '"');
+    }
+  }
+  if (it.op < 1) L.push('opacity="' + r2(it.op) + '"');
+  if (it.tx || it.ty) L.push('transform="translate(' + r2(it.tx) + ', ' + r2(it.ty) + ')"');
+  if (it.blur) L.push('filter="url(#blurHighlight)"');
+  return L;
+}
+/* The drawing itself: <defs> and every visible layer, at a given indent.
+   The .svg file and the .html page are the same body in different wrappers. */
+function emitDrawing(push, owner, pad, withShadowFilter) {
+  const d = model.doc, sh = d.shadow;
+  push(pad + '<defs>');
+  model.gradients.forEach(g => {
+    push(pad + '  <!-- ' + g.label + ' -->');
+    gradTag(g, pad + '  ').split('\n').forEach(push);
+    push('');
+  });
+  push(pad + '  <!-- Soft blur filter for highlights -->');
+  push(pad + '  <filter id="blurHighlight" x="-20%" y="-20%" width="140%" height="140%">');
+  push(pad + '    <feGaussianBlur stdDeviation="' + d.blurStd + '" />');
+  push(pad + '  </filter>');
+  if (withShadowFilter && sh.on) {
+    push('');
+    push(pad + '  <!-- Drop shadow -->');
+    push(pad + '  <filter id="artShadow" x="-25%" y="-25%" width="150%" height="150%">');
+    push(pad + '    <feDropShadow dx="' + sh.dx + '" dy="' + sh.dy + '" stdDeviation="' +
+         r2(sh.blur / 2) + '" flood-color="' + sh.color + '" flood-opacity="' + sh.opacity + '" />');
+    push(pad + '  </filter>');
+  }
+  push(pad + '</defs>');
+  push('');
+
+  const shaded = withShadowFilter && sh.on;
+  const body = shaded ? pad + '  ' : pad;
+  if (shaded) { push(pad + '<g filter="url(#artShadow)">'); }
+
+  model.items.forEach((it, ii) => {
+    if (!it.on) return;
+    owner(ii);
+    const tap = isTapered(it);
+    push(body + '<!-- ' + (ii + 1) + '. ' + (it.note || it.name).toUpperCase() +
+      (tap ? ' (variable width: filled outline)' : '') + ' -->');
+    if (it.type === 'group') {
+      push(body + '<g ' + attrLines(it).join(' ') + '>');
+      it.kids.forEach(k => {
+        if (!k.on) return;
+        push(body + '  <!-- ' + k.name + ' -->');
+        const dl = dString(k.segs, tap ? taperOutline(k.segs, it.taper) : null);
+        push(body + '  <path d="' + dl[0] + (dl.length === 1 ? '" />' : ''));
+        dl.slice(1).forEach((l, i) =>
+          push(' '.repeat(body.length + 11) + l + (i === dl.length - 2 ? '" />' : '')));
+      });
+      push(body + '</g>');
+    } else {
+      const dl = dString(it.segs, tap ? taperOutline(it.segs, it.taper) : null);
+      push(body + '<path d="' + dl[0] + (dl.length === 1 ? '"' : ''));
+      dl.slice(1).forEach((l, i) =>
+        push(' '.repeat(body.length + 9) + l + (i === dl.length - 2 ? '"' : '')));
+      const al = attrLines(it);
+      al.forEach((a, i) => push(' '.repeat(body.length + 6) + a + (i === al.length - 1 ? ' />' : '')));
+    }
+    push('');
+    owner(null);
+  });
+  if (shaded) push(pad + '</g>');
+}
+
+/* mode: 'svg' for a standalone .svg file, 'html' for a ready-to-open page.
+   `own` maps each line back to the layer that produced it, for highlighting. */
+function genCode(mode) {
+  mode = mode || opts.codeMode || 'svg';
+  const d = model.doc, vb = d.viewBox, sh = d.shadow, out = [], own = [];
+  let cur = null;
+  const push = t => { out.push(t); own.push(cur); };
+  const owner = i => { cur = i; };
+  const viewBox = vb.x + ' ' + vb.y + ' ' + vb.w + ' ' + vb.h;
+
+  if (mode === 'svg') {
+    push('<?xml version="1.0" encoding="UTF-8"?>');
+    push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + viewBox + '"');
+    push('     width="' + vb.w + '" height="' + vb.h + '">');
+    push('  <title>' + d.title + '</title>');
+    push('');
+    emitDrawing(push, owner, '  ', true);
+    push('</svg>');
+    return { lines: out, own };
+  }
+
+  push('<!DOCTYPE html>');
+  push('<html lang="en">');
+  push('<head>');
+  push('  <meta charset="UTF-8">');
+  push('  <meta name="viewport" content="width=device-width, initial-scale=1.0">');
+  push('  <title>' + d.title + '</title>');
+  push('  <style>');
+  push('    * {');
+  push('      box-sizing: border-box;');
+  push('      margin: 0;');
+  push('      padding: 0;');
+  push('    }');
+  push('');
+  push('    body {');
+  push('      display: flex;');
+  push('      justify-content: center;');
+  push('      align-items: center;');
+  push('      min-height: 100vh;');
+  push('      background-color: ' + d.pageBg + ';');
+  push('      font-family: system-ui, -apple-system, sans-serif;');
+  push('    }');
+  push('');
+  push('    .art-card {');
+  push('      width: 100%;');
+  push('      max-width: ' + d.maxWidth + 'px;');
+  push('      padding: 30px;');
+  push('      display: flex;');
+  push('      justify-content: center;');
+  push('      align-items: center;');
+  push('    }');
+  push('');
+  push('    svg {');
+  push('      width: 100%;');
+  push('      height: auto;');
+  push('      overflow: visible;');
+  if (sh.on) push('      filter: drop-shadow(' + sh.dx + 'px ' + sh.dy + 'px ' + sh.blur + 'px ' + hexa(sh.color, sh.opacity) + ');');
+  push('    }');
+  push('  </style>');
+  push('</head>');
+  push('<body>');
+  push('');
+  push('  <div class="art-card">');
+  push('    <svg viewBox="' + viewBox + '" xmlns="http://www.w3.org/2000/svg">');
+  emitDrawing(push, owner, '      ', false);
+  push('    </svg>');
+  push('  </div>');
+  push('');
+  push('</body>');
+  push('</html>');
+  return { lines: out, own };
+}
+
+/* a filename for downloads, from the document title */
+function slugName(mode) {
+  const base = (model.doc.title || 'drawing').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'drawing';
+  return base + (mode === 'html' ? '.html' : '.svg');
+}
+
+function codeText(mode) { return genCode(mode).lines.join('\n') + '\n'; }
+
+function hl(line) {
+  let s = esc(line), store = [];
+  s = s.replace(/=(&quot;)(.*?)(&quot;)/g, (m, q1, v, q2) => {
+    store.push('<span class="v">' + q1 + v + q2 + '</span>'); return '=' + (store.length - 1) + '';
+  });
+  s = s.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="c">$1</span>');
+  s = s.replace(/(&lt;\/?)([a-zA-Z][\w:-]*)/g, '$1<span class="t">$2</span>');
+  s = s.replace(/([a-zA-Z-]+)=/g, '<span class="a">$1</span>=');
+  s = s.replace(/(\d+)/g, (m, i) => store[+i]);
+  return s;
+}
+let lastCodeKey = '';
+function renderCode() {
+  const g = genCode();
+  const pre = $('#code');
+  pre.innerHTML = g.lines.map((l, i) =>
+    '<span class="' + (g.own[i] === sel.i ? 'hl' : '') + '"><span class="ln">' + (i + 1) + '</span>' + hl(l) + '</span>'
+  ).join('\n');
+  $('#codeStat').textContent = (opts.codeMode === 'html' ? 'HTML · ' : 'SVG · ') +
+    g.lines.length + ' lines · ' + (g.lines.join(String.fromCharCode(10)).length / 1024).toFixed(1) + ' KB';
+  const key = sel.i + '/' + opts.tab + '/' + opts.codeMode;
+  if (key !== lastCodeKey) {
+    lastCodeKey = key;
+    const first = g.own.indexOf(sel.i);
+    if (first > -1 && !$('#codePane').classList.contains('collapsed')) {
+      const el = pre.children[first];
+      if (el) $('.codeBody').scrollTop = Math.max(0, el.offsetTop - 60);
+    }
+  }
+}
+
+/* ==== panel.js ====================================================== */
+/* panel.js - the properties panel and every edit action
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+
+
+/* ============================ property panel ============================ */
+function selItem() { return model.items[sel.i]; }
+function selKid() { const it = selItem(); return it && it.kids && sel.k != null ? it.kids[sel.k] : null; }
+function selBase() { return sel.k != null ? 'items.' + sel.i + '.kids.' + sel.k : 'items.' + sel.i; }
+function selSegs() { const k = selKid(); return k ? k.segs : (selItem() ? selItem().segs : null); }
+
+function getP(path) { return path.split('.').reduce((a, k) => (a == null ? a : a[k]), model); }
+function setP(path, v) {
+  const k = path.split('.'); const last = k.pop();
+  const t = k.reduce((a, x) => a[x], model); t[last] = v;
+}
+
+/* -- small control builders (all bind through data-b="dot.path") -- */
+const cNum = (label, path, step = 1, min = null, max = null) =>
+  '<div class="row"><label>' + label + '</label><input type="number" step="' + step + '"' +
+  (min !== null ? ' min="' + min + '"' : '') + (max !== null ? ' max="' + max + '"' : '') +
+  ' value="' + r2(getP(path)) + '" data-b="' + path + '" data-t="n"></div>';
+const cText = (label, path) =>
+  '<div class="row"><label>' + label + '</label><input type="text" value="' + esc(getP(path)) +
+  '" data-b="' + path + '" data-t="s"></div>';
+const cColor = (label, path) =>
+  '<div class="row"><label>' + label + '</label><input type="color" value="' + getP(path) +
+  '" data-b="' + path + '" data-t="s"><input type="text" class="grow" value="' + getP(path) +
+  '" data-b="' + path + '" data-t="s"></div>';
+const cRange = (label, path, min, max, step) =>
+  '<div class="row"><label>' + label + '</label><input type="range" min="' + min + '" max="' + max +
+  '" step="' + step + '" value="' + getP(path) + '" data-b="' + path + '" data-t="n">' +
+  '<input type="number" style="width:56px;flex:none" step="' + step + '" value="' + r2(getP(path)) +
+  '" data-b="' + path + '" data-t="n"></div>';
+const cSel = (label, path, opts2) =>
+  '<div class="row"><label>' + label + '</label><select data-b="' + path + '" data-t="s" data-re="1">' +
+  opts2.map(o => '<option value="' + o + '"' + (getP(path) === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+  '</select></div>';
+const cBool = (label, path) =>
+  '<div class="row"><label>' + label + '</label><input type="checkbox" ' + (getP(path) ? 'checked' : '') +
+  ' data-b="' + path + '" data-t="b" data-re="1"></div>';
+
+function cPaint(label, base) {
+  const p = getP(base); let h = '';
+  h += '<div class="row"><label>' + label + '</label><select data-b="' + base + '.mode" data-t="s" data-re="1">' +
+    ['none', 'solid', 'grad'].map(m => '<option value="' + m + '"' + (p.mode === m ? ' selected' : '') + '>' +
+      ({ none: 'none', solid: 'solid colour', grad: 'gradient' })[m] + '</option>').join('') + '</select></div>';
+  if (p.mode === 'solid') {
+    if (p.color == null) p.color = '#ffffff';
+    h += '<div class="row"><label></label><input type="color" value="' + p.color + '" data-b="' + base +
+      '.color" data-t="s"><input type="text" class="grow" value="' + p.color + '" data-b="' + base + '.color" data-t="s"></div>';
+  } else if (p.mode === 'grad') {
+    if (!byId(p.grad)) p.grad = model.gradients[0].id;
+    h += '<div class="row"><label></label><select class="grow" data-b="' + base + '.grad" data-t="s" data-re="1">' +
+      model.gradients.map(g => '<option value="' + g.id + '"' + (p.grad === g.id ? ' selected' : '') + '>' +
+        esc(g.label) + '</option>').join('') + '</select></div>';
+    h += '<div class="gbar" style="background:' + gradCss(byId(p.grad)) + '"></div>';
+  }
+  if (p.mode !== 'none') {
+    if (p.op == null) p.op = 1;
+    h += cRange('opacity', base + '.op', 0, 1, 0.01);
+  }
+  return h;
+}
+
+function renderPanel() {
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === opts.tab));
+  const host = $('#panel');
+  host.innerHTML = opts.tab === 'el' ? panelElement()
+    : opts.tab === 'grad' ? panelGradients() : panelDoc();
+}
+
+function panelElement() {
+  const it = selItem();
+  if (!it) return '<div class="empty">Nothing selected.<br>Pick a layer on the left, or click a shape on the canvas.</div>';
+  const kid = selKid(); const base = 'items.' + sel.i;
+  let h = '<div class="sect"><div class="body">';
+
+  h += '<div class="row"><label>Layer</label><input type="text" value="' + esc(it.name) +
+    '" data-b="' + base + '.name" data-t="s"></div>';
+  h += cBool('visible', base + '.on');
+
+  h += '</div></div><div class="sect"><h3>Paint</h3><div class="body">';
+  h += cPaint('Fill', base + '.fill');
+  h += cPaint('Stroke', base + '.stroke');
+  if (it.stroke.mode !== 'none') {
+    // with varying width on, the single width value no longer draws anything —
+    // the width stops below own it, so don't offer a control that does nothing
+    if (!it.taper || !it.taper.on) h += cNum('width', base + '.w', 0.1, 0);
+    h += cSel('linecap', base + '.cap', ['butt', 'round', 'square']);
+    if (it.fill.mode !== 'none') h += cSel('linejoin', base + '.join', ['miter', 'round', 'bevel']);
+  }
+  h += cRange('opacity', base + '.op', 0, 1, 0.01);
+  h += cBool('soft blur', base + '.blur');
+  h += '</div></div>';
+
+  /* ---- variable width along the line ---- */
+  const tp = it.taper;
+  h += '<div class="sect"><h3>Line width along the path</h3><div class="body">';
+  h += '<div class="row"><label>varying</label><input type="checkbox" ' + (tp && tp.on ? 'checked' : '') +
+    ' data-act="taperOn"></div>';
+  if (tp && tp.on) {
+    const last = tp.stops.length - 1;
+    h += '<div class="hint">Each stop sets the width at one place along the line, so the ' +
+      'two ends move independently. Drag the square handles on the canvas, or type here.</div>';
+    tp.stops.forEach((st, si) => {
+      const end = si === 0 ? 'start' : si === last ? 'end' : null;
+      h += '<div class="stop">' +
+        (end
+          ? '<span style="width:34px;color:var(--acc);font-size:11px">' + end + '</span>'
+          : '<span style="width:34px;color:var(--dim2);font-size:11px">' + Math.round(st.t * 100) + '%</span>') +
+        '<input type="range" min="0" max="100" value="' + Math.round(st.t * 100) +
+          '" data-b="' + base + '.taper.stops.' + si + '.tPct" data-t="tpct" data-arg="' + si + '"' +
+          (end ? ' disabled title="the ends stay pinned at 0% and 100%"' : ' title="position along the line"') + '>' +
+        '<input type="number" style="width:58px;flex:none" min="0" step="0.2" value="' + r2(st.w) +
+          '" data-b="' + base + '.taper.stops.' + si + '.w" data-t="n" title="width at this point">' +
+        (end ? '<span class="x" style="opacity:.25;cursor:default" title="an end stop cannot be removed">✕</span>'
+             : '<span class="x" data-act="delTaper" data-arg="' + si + '">✕</span>') +
+        '</div>';
+    });
+    h += '<div class="row"><button class="btn grow" data-act="addTaper">+ width stop in between</button></div>';
+    h += '<div class="row" style="gap:4px">' +
+      '<button class="btn grow" data-act="taperPreset" data-arg="tip">tip taper</button>' +
+      '<button class="btn grow" data-act="taperPreset" data-arg="leaf">belly</button>' +
+      '<button class="btn grow" data-act="taperPreset" data-arg="even">even</button></div>';
+  }
+  h += '</div></div>';
+
+  h += '<div class="sect"><h3>Position &amp; transform</h3><div class="body">';
+  h += cNum('offset x', base + '.tx', 0.5);
+  h += cNum('offset y', base + '.ty', 0.5);
+  h += '<div class="row" style="gap:4px">' +
+    '<button class="btn grow" data-act="flipH">⇋ flip H</button>' +
+    '<button class="btn grow" data-act="flipV">⇵ flip V</button></div>';
+  h += '<div class="row" style="gap:4px">' +
+    '<button class="btn grow" data-act="scaleDown">− scale</button>' +
+    '<button class="btn grow" data-act="scaleUp">+ scale</button>' +
+    '<button class="btn grow" data-act="rot">↻ 15°</button></div>';
+  h += '<div class="hint">Transforms apply to ' + (kid ? '<b>' + esc(kid.name) + '</b>' : 'this layer') +
+    ' around its own centre and are baked into the coordinates.</div>';
+  h += '</div></div>';
+
+  if (it.type === 'group') {
+    h += '<div class="sect"><h3>Lines in this group</h3><div class="body">';
+    it.kids.forEach((k, ki) => {
+      h += '<div class="row"><label style="width:20px">' + (ki + 1) + '</label>' +
+        '<input type="text" value="' + esc(k.name) + '" data-b="' + base + '.kids.' + ki + '.name" data-t="s">' +
+        '<button class="btn icon" data-act="pickKid" data-arg="' + ki + '" title="Edit this line">✎</button></div>';
+    });
+    h += '<div class="row"><button class="btn grow" data-act="addKid">+ add line to group</button></div>';
+    h += '</div></div>';
+  }
+
+  const segs = selSegs();
+  if (segs) {
+    h += '<div class="sect"><h3>Curve &amp; points' + (kid ? ' — ' + esc(kid.name) : '') + '</h3><div class="body">';
+    h += '<table class="pts"><tr><th>seg</th><th>x</th><th>y</th><th></th><th></th></tr>';
+    const pb = (kid ? base + '.kids.' + sel.k : base) + '.segs';
+    segs.forEach((sg, si) => {
+      const rowsel = selSeg === si ? ' class="seg-sel"' : '';
+      const nm = { M: 'move', L: 'line', Q: 'quad', C: 'cubic', Z: 'close' };
+      h += '<tr' + rowsel + '><td colspan="5" style="padding-top:6px">' +
+        '<select style="width:auto;display:inline-block" data-b="' + pb + '.' + si + '.type" data-t="seg" data-arg="' + si + '">' +
+        ['M', 'L', 'Q', 'C', 'Z'].map(t => '<option value="' + t + '"' + (sg.type === t ? ' selected' : '') + '>' +
+          t + ' · ' + nm[t] + '</option>').join('') + '</select>' +
+        '<span class="x" style="float:right" data-act="delSeg" data-arg="' + si + '" title="Delete segment">✕</span>' +
+        '<span class="x" style="float:right" data-act="addSeg" data-arg="' + si + '" title="Add segment after">＋</span>' +
+        (sg.type === 'Q' || sg.type === 'C' || sg.type === 'L'
+          ? '<span class="x" style="float:right" data-act="splitSeg" data-arg="' + si +
+            '" title="Add a point in the middle of this curve (shape is preserved)">◈</span>' : '') +
+        '</td></tr>';
+      sg.pts.forEach((p, pi) => {
+        const role = sg.type === 'M' ? 'start' : (pi === sg.pts.length - 1 ? 'end' :
+          (sg.type === 'C' ? 'ctrl ' + (pi + 1) : 'ctrl'));
+        h += '<tr' + rowsel + '><td style="color:var(--dim2)">' + role + '</td>' +
+          '<td><input type="number" step="1" value="' + r2(p[0]) + '" data-b="' + pb + '.' + si + '.pts.' + pi + '.0" data-t="n"></td>' +
+          '<td><input type="number" step="1" value="' + r2(p[1]) + '" data-b="' + pb + '.' + si + '.pts.' + pi + '.1" data-t="n"></td>' +
+          '<td colspan="2"></td></tr>';
+      });
+    });
+    h += '</table>';
+    h += '<div class="row" style="gap:4px">' +
+      '<button class="btn grow" data-act="addSeg" data-arg="-1">+ point at end</button>' +
+      '<button class="btn grow" data-act="splitLongest">◈ point in middle</button></div>';
+    h += '<div class="hint">Or <b>double-click anywhere on the line</b> on the canvas to drop a new point exactly there.</div>';
+    h += '<div class="row wide"><label style="width:auto">path d</label></div>' +
+      '<textarea rows="3" spellcheck="false" data-act="setD" style="font:11px ui-monospace,monospace">' +
+      esc(segsToD(segs)) + '</textarea>' +
+      '<div class="hint">Paste any SVG path here (M / L / Q / C / Z, absolute) and it becomes editable points.</div>';
+    h += '</div></div>';
+  }
+
+  h += '<div class="sect"><div class="body"><div class="row" style="gap:4px">' +
+    '<button class="btn grow" data-act="dupItem">⧉ duplicate layer</button>' +
+    '<button class="btn grow" data-act="delItem" style="color:var(--danger)">✕ delete layer</button>' +
+    '</div></div></div>';
+  return h;
+}
+
+function panelGradients() {
+  let h = '';
+  model.gradients.forEach((g, gi) => {
+    const b = 'gradients.' + gi;
+    h += '<div class="sect"><h3>' + esc(g.label) + '<span class="spacer" style="flex:1"></span>' +
+      '<span class="tag">#' + g.id + '</span></h3><div class="body">';
+    h += '<div class="gbar" style="background:' + gradCss(g) + '"></div>';
+    h += '<div class="row"><label>name</label><input type="text" value="' + esc(g.label) +
+      '" data-b="' + b + '.label" data-t="s"></div>';
+    if (g.kind === 'radial') {
+      h += '<div class="row"><label>centre %</label>' +
+        '<input type="number" value="' + g.cx + '" data-b="' + b + '.cx" data-t="n">' +
+        '<input type="number" value="' + g.cy + '" data-b="' + b + '.cy" data-t="n"></div>';
+      h += cNum('radius %', b + '.r', 1, 0);
+    } else {
+      h += '<div class="row"><label>angle x1/y1</label>' +
+        '<input type="number" value="' + g.x1 + '" data-b="' + b + '.x1" data-t="n">' +
+        '<input type="number" value="' + g.y1 + '" data-b="' + b + '.y1" data-t="n"></div>';
+      h += '<div class="row"><label>angle x2/y2</label>' +
+        '<input type="number" value="' + g.x2 + '" data-b="' + b + '.x2" data-t="n">' +
+        '<input type="number" value="' + g.y2 + '" data-b="' + b + '.y2" data-t="n"></div>';
+    }
+    g.stops.forEach((st, si) => {
+      const sb = b + '.stops.' + si;
+      h += '<div class="stop">' +
+        '<input type="color" value="' + st.color + '" data-b="' + sb + '.color" data-t="s">' +
+        '<input type="number" style="width:52px" min="0" max="100" value="' + st.off + '" data-b="' + sb + '.off" data-t="n" title="offset %">' +
+        '<input type="number" style="width:52px" min="0" max="1" step="0.05" value="' + st.op + '" data-b="' + sb + '.op" data-t="n" title="opacity">' +
+        '<span class="x" data-act="delStop" data-arg="' + gi + '_' + si + '">✕</span></div>';
+    });
+    h += '<div class="row"><button class="btn grow" data-act="addStop" data-arg="' + gi + '">+ colour stop</button></div>';
+    h += '</div></div>';
+  });
+  h += '<div class="sect"><div class="body"><div class="row">' +
+    '<button class="btn grow" data-act="addGrad">+ new gradient</button></div>' +
+    '<div class="hint">Gradients are shared: every layer that points at one updates together.</div></div></div>';
+  return h;
+}
+
+function panelDoc() {
+  let h = '<div class="sect"><h3>Document</h3><div class="body">';
+  h += cText('title', 'doc.title');
+  h += cColor('page bg', 'doc.pageBg');
+  h += cNum('card width', 'doc.maxWidth', 10, 100);
+  h += '</div></div><div class="sect"><h3>viewBox</h3><div class="body">';
+  h += cNum('x', 'doc.viewBox.x', 1) + cNum('y', 'doc.viewBox.y', 1);
+  h += cNum('width', 'doc.viewBox.w', 1, 1) + cNum('height', 'doc.viewBox.h', 1, 1);
+  h += '<div class="hint">Grow the viewBox if a shape gets clipped. Everything scales with it.</div>';
+  h += '</div></div><div class="sect"><h3>Drop shadow</h3><div class="body">';
+  h += cBool('enabled', 'doc.shadow.on');
+  if (model.doc.shadow.on) {
+    h += cNum('offset x', 'doc.shadow.dx', 1) + cNum('offset y', 'doc.shadow.dy', 1);
+    h += cNum('blur', 'doc.shadow.blur', 1, 0);
+    h += cColor('colour', 'doc.shadow.color');
+    h += cRange('opacity', 'doc.shadow.opacity', 0, 1, 0.01);
+  }
+  h += '</div></div><div class="sect"><h3>Sheen blur filter</h3><div class="body">';
+  h += cRange('std deviation', 'doc.blurStd', 0, 24, 0.5);
+  h += '</div></div>';
+  return h;
+}
+
+/* ------------------------------ panel events ------------------------------ */
+const panel = $('#panel');
+panel.addEventListener('focusin', e => { if (e.target.matches('input,select,textarea')) snapshot(); });
+panel.addEventListener('input', e => {
+  const el = e.target, b = el.dataset.b; if (!b) return;
+  const t = el.dataset.t;
+  if (t === 'seg') {
+    snapshot(); convertSeg(getP(b.replace(/\.\d+\.type$/, '')), +el.dataset.arg, el.value); commit();
+    renderAll(); return;
+  }
+  if (t === 'tpct') {                      // width-stop position slider (0-100 -> 0-1)
+    const stops = getP(b.replace(/\.\d+\.tPct$/, ''));
+    stops[+el.dataset.arg].t = Math.max(0, Math.min(1, num(el.value, 0) / 100));
+    renderArt(); renderCode(); return;
+  }
+  let v = t === 'n' ? num(el.value, 0) : t === 'b' ? el.checked : el.value;
+  setP(b, v);
+  if (el.dataset.re) { commit(); renderAll(); }
+  else {
+    // live-sync twins (colour picker <-> hex field, range <-> number)
+    $$('#panel [data-b="' + b + '"]').forEach(o => { if (o !== el && o.value !== String(v)) o.value = v; });
+    renderArt(); renderCode(); renderLayers();
+  }
+});
+panel.addEventListener('change', e => { if (e.target.dataset.b) { commit(); save(); } });
+panel.addEventListener('click', e => {
+  const btn = e.target.closest('[data-act]'); if (!btn) return;
+  act(btn.dataset.act, btn.dataset.arg);
+});
+panel.addEventListener('change', e => {
+  if (e.target.dataset.act === 'setD') {
+    edit(() => {
+      const segs = parseD(e.target.value);
+      if (sel.k != null) selItem().kids[sel.k].segs = segs; else selItem().segs = segs;
+    });
+  }
+});
+$$('.tab').forEach(t => t.addEventListener('click', () => { opts.tab = t.dataset.tab; renderPanel(); }));
+
+/* -------------------------------- actions -------------------------------- */
+function act(a, arg) {
+  const it = selItem();
+  const segsRef = () => (sel.k != null ? it.kids[sel.k] : it);
+  switch (a) {
+    case 'flipH': case 'flipV': case 'scaleUp': case 'scaleDown': case 'rot': {
+      edit(() => {
+        const o = segsRef(), bb = bbox(o.segs);
+        const cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2;
+        if (a === 'flipH') mapPath(o.segs, (x, y) => [2 * cx - x, y]);
+        if (a === 'flipV') mapPath(o.segs, (x, y) => [x, 2 * cy - y]);
+        if (a === 'scaleUp' || a === 'scaleDown') {
+          const s = a === 'scaleUp' ? 1.05 : 1 / 1.05;
+          mapPath(o.segs, (x, y) => [cx + (x - cx) * s, cy + (y - cy) * s]);
+        }
+        if (a === 'rot') {
+          const t = 15 * Math.PI / 180, co = Math.cos(t), si = Math.sin(t);
+          mapPath(o.segs, (x, y) => [cx + (x - cx) * co - (y - cy) * si, cy + (x - cx) * si + (y - cy) * co]);
+        }
+      });
+      break;
+    }
+    case 'addSeg': edit(() => {
+      const o = segsRef(), i = +arg < 0 ? o.segs.length - 1 : +arg;
+      const a0 = o.segs[i] && o.segs[i].pts.length ? o.segs[i].pts[o.segs[i].pts.length - 1] : [100, 100];
+      const end = [a0[0] + 60, a0[1] - 45];
+      o.segs.splice(i + 1, 0, seg('Q', (a0[0] + end[0]) / 2 + 18, (a0[1] + end[1]) / 2 - 18, end[0], end[1]));
+      setSelSeg(i + 1);
+    }); break;
+    case 'delSeg': edit(() => {
+      const o = segsRef(); if (o.segs.length <= 2) return toast('A path needs at least two segments');
+      o.segs.splice(+arg, 1); if (o.segs[0].type !== 'M') o.segs[0].type = 'M';
+      setSelSeg(-1);
+    }); break;
+    case 'splitSeg': edit(() => {
+      const o = segsRef();
+      if (!splitSeg(o.segs, +arg, 0.5)) toast('That segment has no middle to split');
+      else setSelSeg(+arg);
+    }); break;
+    case 'splitLongest': edit(() => {
+      const o = segsRef();
+      let best = -1, bestLen = -1, cur = null;
+      o.segs.forEach((s, si) => {
+        if (s.type === 'M') { cur = s.pts[0]; return; }
+        if (!cur || s.type === 'Z') return;
+        const len = ctrlLen([cur].concat(s.pts));
+        if (len > bestLen) { bestLen = len; best = si; }
+        cur = s.pts[s.pts.length - 1];
+      });
+      if (best < 0 || !splitSeg(o.segs, best, 0.5)) toast('Nothing to split yet');
+      else setSelSeg(best);
+    }); break;
+    case 'taperOn': edit(() => {
+      if (it.taper && it.taper.on) it.taper.on = false;
+      else it.taper = it.taper ? Object.assign(it.taper, { on: true }) : defaultTaper(it.w);
+    }); break;
+    case 'addTaper': edit(() => {
+      const s = it.taper.stops;
+      s.push({ t: 0.5, w: r2(widthAt(s, 0.5)) });
+      s.sort((a2, b2) => a2.t - b2.t);
+    }); break;
+    case 'delTaper': edit(() => {
+      if (it.taper.stops.length <= 2) return toast('Keep at least two width stops');
+      it.taper.stops.splice(+arg, 1);
+    }); break;
+    case 'taperPreset': edit(() => {
+      const w = it.w || 3;
+      it.taper.stops = arg === 'tip' ? [{ t: 0, w: r2(w * 1.8) }, { t: 1, w: 0 }]
+        : arg === 'leaf' ? [{ t: 0, w: 0 }, { t: 0.35, w: r2(w * 2.2) }, { t: 1, w: 0 }]
+        : [{ t: 0, w: r2(w) }, { t: 1, w: r2(w) }];
+    }); break;
+    case 'pickKid': sel.k = +arg; setSelSeg(-1); renderAll(); break;
+    case 'addKid': edit(() => { it.kids.push(newLine(it)); sel.k = it.kids.length - 1; }); break;
+    case 'dupItem': edit(() => {
+      const c = clone(it); c.id = uid('el'); c.name = it.name + ' copy';
+      if (c.kids) c.kids.forEach(k => k.id = uid('v'));
+      model.items.splice(sel.i + 1, 0, c); setSel({ i: sel.i + 1, k: null });
+    }); break;
+    case 'delItem': edit(() => {
+      if (model.items.length <= 1) return toast('Keep at least one layer');
+      model.items.splice(sel.i, 1); setSel({ i: Math.max(0, sel.i - 1), k: null });
+    }); break;
+    case 'addStop': edit(() => {
+      const g = model.gradients[+arg];
+      g.stops.push({ off: 100, color: '#ffffff', op: 1 });
+      g.stops.sort((a2, b2) => a2.off - b2.off);
+    }); break;
+    case 'delStop': edit(() => {
+      const [gi, si] = arg.split('_').map(Number);
+      if (model.gradients[gi].stops.length <= 2) return toast('A gradient needs two stops');
+      model.gradients[gi].stops.splice(si, 1);
+    }); break;
+    case 'addGrad': edit(() => {
+      const id = uid('grad');
+      model.gradients.push({ id, label: 'New gradient', x1: 0, y1: 100, x2: 100, y2: 0,
+        stops: [{ off: 0, color: '#1a8915', op: 1 }, { off: 100, color: '#a4f134', op: 1 }] });
+    }); break;
+  }
+}
+function newLine(group) {
+  const b = group.kids.length ? bbox(group.kids[group.kids.length - 1].segs) : { x0: 180, y0: 240, x1: 280, y1: 320 };
+  const x = b.x0 + 12, y = b.y0 + 30;
+  return { id: uid('v'), name: 'Line ' + (group.kids.length + 1), on: true,
+    segs: [seg('M', r2(x), r2(y)), seg('Q', r2(x + 40), r2(y - 30), r2(x + 78), r2(y - 52))] };
+}
+
+/* ------------------------------ layer events ------------------------------ */
+$('#layers').addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset.eye !== undefined) {
+    const i = +t.dataset.eye;
+    edit(() => { if (t.dataset.eyek !== undefined) { const k = model.items[i].kids[+t.dataset.eyek]; k.on = !k.on; } else model.items[i].on = !model.items[i].on; });
+    return;
+  }
+  if (t.dataset.up !== undefined) { const i = +t.dataset.up; if (i > 0) edit(() => { const [m] = model.items.splice(i, 1); model.items.splice(i - 1, 0, m); setSel({ i: i - 1, k: null }); }); return; }
+  if (t.dataset.down !== undefined) { const i = +t.dataset.down; if (i < model.items.length - 1) edit(() => { const [m] = model.items.splice(i, 1); model.items.splice(i + 1, 0, m); setSel({ i: i + 1, k: null }); }); return; }
+  if (t.dataset.del !== undefined) { setSel({ i: +t.dataset.del, k: null }); act('delItem'); return; }
+  if (t.dataset.delk !== undefined) {
+    const [i, k] = t.dataset.delk.split('_').map(Number);
+    edit(() => { model.items[i].kids.splice(k, 1); setSel({ i, k: null }); }); return;
+  }
+  if (t.dataset.dupk !== undefined) {
+    const [i, k] = t.dataset.dupk.split('_').map(Number);
+    edit(() => { const c = clone(model.items[i].kids[k]); c.id = uid('v'); c.name += ' copy';
+      movePath(c.segs, 8, 8); model.items[i].kids.splice(k + 1, 0, c); setSel({ i, k: k + 1 }); }); return;
+  }
+  const row = t.closest('.layer'); if (!row) return;
+  setSel({ i: +row.dataset.i, k: row.dataset.k !== undefined ? +row.dataset.k : null });
+  setSelSeg(-1); opts.tab = 'el'; renderAll();
+});
+
+/* ==== interaction.js ================================================ */
+/* interaction.js - pointer, wheel, keyboard and drag-and-drop
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+
+
+
+
+/* ------------------------------ canvas events ------------------------------ */
+let drag = null;
+
+function toUser(e) {
+  const pt = art.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  return pt.matrixTransform(vp.getScreenCTM().inverse());
+}
+function toSvgPx(e) {
+  const pt = art.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  return pt.matrixTransform(art.getScreenCTM().inverse());
+}
+const snapV = v => opts.snap ? Math.round(v) : r2(v);
+
+art.addEventListener('pointerdown', e => {
+  art.setPointerCapture(e.pointerId);
+  const handle = e.target.closest('circle[data-s]');
+  const wHandle = e.target.closest('[data-w]');
+  const shape = e.target.closest('.hitp');
+  const u = toUser(e);
+
+  /* width handle: this stop only, so one end can grow while the other shrinks */
+  if (wHandle) {
+    const it = selItem();
+    const holder = it.type === 'group' ? it.kids[sel.k != null ? sel.k : 0] : it;
+    if (it && holder && it.taper) {
+      snapshot();
+      drag = { kind: 'width', it, holder, si: +wHandle.dataset.w,
+               t0: it.taper.stops[+wHandle.dataset.w].t };
+      return;
+    }
+  }
+
+  if (handle) {
+    const i = +handle.dataset.i, k = handle.dataset.k !== undefined ? +handle.dataset.k : null;
+    setSel({ i, k }); setSelSeg(+handle.dataset.s); opts.tab = 'el';
+    snapshot();
+    const it = model.items[i];
+    const segs = k != null ? it.kids[k].segs : it.segs;
+    const si = +handle.dataset.s, pi = +handle.dataset.p, sg = segs[si];
+    const isAnchor = sg.type === 'M' || pi === sg.pts.length - 1;
+    const linked = [];
+    if (isAnchor && !e.altKey) {
+      // drag the handles attached to this anchor along with it
+      if (sg.type !== 'M') sg.pts.slice(0, -1).forEach(p => linked.push(p));
+      const nx = segs[si + 1];
+      if (nx && (nx.type === 'Q' || nx.type === 'C')) linked.push(nx.pts[0]);
+    }
+    drag = { kind: 'pt', segs, p: sg.pts[pi], linked, start: u,
+      orig: [sg.pts[pi][0], sg.pts[pi][1]], origL: linked.map(p => [p[0], p[1]]) };
+    renderAll(); return;
+  }
+  if (shape) {
+    const i = +shape.dataset.i, k = shape.dataset.k !== undefined ? +shape.dataset.k : null;
+    if (sel.i !== i || sel.k !== k) { setSel({ i, k }); setSelSeg(-1); opts.tab = 'el'; renderAll(); }
+    snapshot();
+    const it = model.items[i];
+    const segs = k != null ? it.kids[k].segs : it.segs;
+    drag = { kind: 'shape', segs, start: u, orig: allPts(segs).map(({ p }) => [p[0], p[1]]) };
+    return;
+  }
+  drag = { kind: 'pan', start: toSvgPx(e), ox: view.x, oy: view.y, moved: false };
+  art.classList.add('panning');
+});
+
+art.addEventListener('pointermove', e => {
+  const u = toUser(e);
+  $('#hx').textContent = Math.round(u.x); $('#hy').textContent = Math.round(u.y);
+  if (!drag) return;
+  if (drag.kind === 'pan') {
+    const s = toSvgPx(e);
+    view.x = drag.ox + (s.x - drag.start.x); view.y = drag.oy + (s.y - drag.start.y);
+    drag.moved = true; renderArt(); return;
+  }
+  if (drag.kind === 'width') {
+    const it = drag.it, st = it.taper.stops[drag.si];
+    const res = widthFromDrag(drag.holder.segs, drag.t0,
+      [u.x - (it.tx || 0), u.y - (it.ty || 0)]);
+    if (res) {
+      st.w = opts.snap ? Math.round(res.w) : Math.round(res.w * 10) / 10;
+      // sliding along the line re-positions the stop, but the two ends stay put
+      const isEnd = drag.si === 0 || drag.si === it.taper.stops.length - 1;
+      if (!isEnd) st.t = Math.max(0, Math.min(1, drag.t0 + res.dt));
+    }
+    renderArt(); renderCode(); return;
+  }
+  let dx = u.x - drag.start.x, dy = u.y - drag.start.y;
+  if (e.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+  if (drag.kind === 'pt') {
+    drag.p[0] = snapV(drag.orig[0] + dx); drag.p[1] = snapV(drag.orig[1] + dy);
+    drag.linked.forEach((p, i) => { p[0] = snapV(drag.origL[i][0] + dx); p[1] = snapV(drag.origL[i][1] + dy); });
+  } else {
+    allPts(drag.segs).forEach(({ p }, i) => { p[0] = snapV(drag.orig[i][0] + dx); p[1] = snapV(drag.orig[i][1] + dy); });
+  }
+  renderArt(); renderCode();
+});
+
+art.addEventListener('pointerup', e => {
+  art.classList.remove('panning');
+  if (!drag) return;
+  if (drag.kind === 'pan') { if (!drag.moved) { setSel({ i: sel.i, k: null }); setSelSeg(-1); } cancelSnapshot(); }
+  else { commit(); renderPanel(); }
+  drag = null; renderCode();
+});
+art.addEventListener('pointercancel', () => { drag = null; cancelSnapshot(); art.classList.remove('panning'); });
+
+/* double-click a line to insert a point exactly where you clicked */
+art.addEventListener('dblclick', e => {
+  const shape = e.target.closest('.hitp');
+  if (!shape) return;
+  e.preventDefault();
+  const i = +shape.dataset.i, k = shape.dataset.k !== undefined ? +shape.dataset.k : null;
+  const it = model.items[i];
+  const holder = k != null ? it.kids[k] : it;
+  const u = toUser(e);
+  const pt = [u.x - (it.tx || 0), u.y - (it.ty || 0)];
+  const hit = nearestOnPath(holder.segs, pt);
+  if (hit.si < 0) return toast('Could not find a spot on that line');
+  setSel({ i, k }); opts.tab = 'el';
+  edit(() => { if (splitSeg(holder.segs, hit.si, hit.t)) setSelSeg(hit.si); });
+  toast('Point added mid-curve');
+});
+
+/* drop an .svg file anywhere on the canvas to load it */
+['dragenter', 'dragover'].forEach(ev => $('#stage').addEventListener(ev, e => {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+}));
+$('#stage').addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!f) return;
+  if (!/\.svg$/i.test(f.name) && f.type !== 'image/svg+xml') return toast('Drop an .svg file');
+  if (!confirm('Replace the current drawing with ' + f.name + '?')) return;
+  loadSVGFile(f);
+});
+
+art.addEventListener('wheel', e => {
+  e.preventDefault();
+  const s = toSvgPx(e);
+  const k = Math.exp(-e.deltaY * 0.0015);
+  const z2 = Math.min(12, Math.max(0.15, view.z * k));
+  view.x = s.x - (s.x - view.x) * (z2 / view.z);
+  view.y = s.y - (s.y - view.y) * (z2 / view.z);
+  view.z = z2; renderArt();
+}, { passive: false });
+
+
+/* -------------------------------- keyboard -------------------------------- */
+addEventListener('keydown', e => {
+  const typing = /input|textarea|select/i.test(document.activeElement.tagName);
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault(); e.shiftKey ? redo() : undo(); return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  if (typing) return;
+  if (e.key === 'Escape') { sel.k = null; setSelSeg(-1); renderAll(); return; }
+  if (e.key.startsWith('Arrow')) {
+    e.preventDefault();
+    const d = e.shiftKey ? 10 : 1;
+    const dx = e.key === 'ArrowRight' ? d : e.key === 'ArrowLeft' ? -d : 0;
+    const dy = e.key === 'ArrowDown' ? d : e.key === 'ArrowUp' ? -d : 0;
+    const o = sel.k != null ? selItem().kids[sel.k] : selItem();
+    if (o) edit(() => movePath(o.segs, dx, dy));
+  }
+});
+
+/* ==== main.js ======================================================= */
+/* main.js - wires the toolbar up and starts the editor
+   part of SVG Editor Studio - see svg-studio/README.md */
+
+
+
+
+
+
+
+
+setRenderer(() => { renderArt(); renderLayers(); renderPanel(); renderCode(); });
+
+/* -------------------------------- top bar -------------------------------- */
+$('#bUndo').onclick = undo;
+$('#bRedo').onclick = redo;
+$('#bFit').onclick = fit;
+$('#bHandles').onclick = e => { opts.allHandles = !opts.allHandles; e.currentTarget.classList.toggle('on', opts.allHandles); renderAll(); };
+$('#bSnap').onclick = e => { opts.snap = !opts.snap; e.currentTarget.classList.toggle('on', opts.snap); };
+$('#handleMode').onchange = e => { opts.handleMode = e.target.value; renderArt(); };
+$('#bImport').onclick = () => $('#fileIn').click();
+$('#fileIn').onchange = e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (f && confirm('Replace the current drawing with ' + f.name + '?\n\n(Undo still works, and Reset brings back the sample drawing.)')) loadSVGFile(f);
+};
+$('#bReset').onclick = () => {
+  if (!confirm('Discard your edits and restore the sample drawing?')) return;
+  snapshot(); setModel(original()); setSel({ i: 0, k: null }); commit(); renderAll(); fit(); toast('Sample drawing restored');
+};
+/* ------------------------- copying and downloading ------------------------- */
+function copyCode(mode) {
+  const kind = mode === 'html' ? 'HTML' : 'SVG';
+  const t = codeText(mode);
+  const done = () => toast(kind + ' copied to the clipboard');
+  navigator.clipboard.writeText(t).then(done).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); done();
+  });
+}
+function download(mode) {
+  const name = slugName(mode);
+  const blob = new Blob([codeText(mode)],
+    { type: mode === 'html' ? 'text/html' : 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(name + ' downloaded');
+}
+$('#bDownload').onclick = () => download('svg');
+$('#bDownloadHtml').onclick = () => download('html');
+$('#bCopyHtml').onclick = () => copyCode('html');
+/* the pane's own Copy follows whichever tab is showing */
+$('#bCopy2').onclick = e => { e.stopPropagation(); copyCode(opts.codeMode); };
+
+function setCodeMode(mode) {
+  opts.codeMode = mode;
+  $('#bModeSvg').classList.toggle('on', mode === 'svg');
+  $('#bModeHtml').classList.toggle('on', mode === 'html');
+  renderCode();
+}
+$('#bModeSvg').onclick = e => { e.stopPropagation(); setCodeMode('svg'); };
+$('#bModeHtml').onclick = e => { e.stopPropagation(); setCodeMode('html'); };
+
+$('#codeHead').onclick = () => {
+  const p = $('#codePane'); p.classList.toggle('collapsed');
+  $('#codeTitle').textContent = (p.classList.contains('collapsed') ? '▸' : '▾') + ' Generated code';
+};
+$$('[data-add]').forEach(b => b.onclick = () => {
+  const kind = b.dataset.add;
+  edit(() => {
+    if (kind === 'line') {
+      // into the selected group, else the first group in the drawing
+      let gi = sel.i;
+      if (!model.items[gi] || model.items[gi].type !== 'group') {
+        gi = model.items.findIndex(x => x.type === 'group');
+      }
+      if (gi < 0) return toast('No line group yet — add one first');
+      const g = model.items[gi];
+      g.kids.push(newLine(g)); setSel({ i: gi, k: g.kids.length - 1 });
+    } else if (kind === 'group') {
+      const g = { id: uid('grp'), name: 'Line group', note: 'LINE GROUP', type: 'group', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'solid', color: '#e6ffc8', op: 0.6 },
+        w: 2.2, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false, kids: [] };
+      g.kids.push(newLine(g));
+      model.items.push(g); setSel({ i: model.items.length - 1, k: 0 });
+    } else {
+      model.items.push({ id: uid('el'), name: 'New path', note: 'CUSTOM PATH', type: 'path', on: true,
+        fill: { mode: 'none' }, stroke: { mode: 'solid', color: '#ffffff', op: 0.9 },
+        w: 3, cap: 'round', join: 'round', op: 1, tx: 0, ty: 0, blur: false,
+        segs: [seg('M', 160, 340), seg('C', 200, 280, 260, 230, 320, 190)] });
+      setSel({ i: model.items.length - 1, k: null });
+    }
+    opts.tab = 'el';
+  });
+});
+
+/* --------------------------------- boot --------------------------------- */
+clampSel(); syncUndoBtns(); renderAll(); fit();
+addEventListener('resize', () => renderArt());
+window.__svgStudioBooted = true;  // index.html shows a "needs a server" hint without this
+
+</script>
+
+<script>
+(function(){
+  const R=[]; const ok=(n,c,x)=>R.push((c?'PASS':'FAIL')+' | '+n+(x?' | '+x:''));
+  try {
+    // --- SVG export ---
+    const svg = codeText('svg');
+    const d1 = new DOMParser().parseFromString(svg, 'image/svg+xml');
+    ok('svg export parses as real SVG', !d1.querySelector('parsererror'),
+       (d1.querySelector('parsererror')||{textContent:''}).textContent.slice(0,60));
+    const root = d1.documentElement;
+    ok('svg root has namespace + viewBox',
+       root.tagName === 'svg' && root.getAttribute('xmlns') === 'http://www.w3.org/2000/svg' &&
+       root.getAttribute('viewBox') === '0 0 500 500', root.getAttribute('viewBox'));
+    ok('svg export keeps every shape', d1.querySelectorAll('path').length === 17,
+       d1.querySelectorAll('path').length + ' paths');
+    ok('svg export keeps gradients', d1.querySelectorAll('linearGradient').length === 5);
+    ok('svg export carries the drop shadow as a real filter',
+       !!d1.querySelector('feDropShadow') && /url\(#artShadow\)/.test(svg));
+    ok('svg export declares xml prolog', svg.trim().startsWith('<?xml'));
+
+    // --- HTML export still works ---
+    const html = codeText('html');
+    const d2 = new DOMParser().parseFromString(html, 'text/html');
+    ok('html export still parses', d2.querySelectorAll('svg path').length === 17,
+       d2.querySelectorAll('svg path').length + ' paths');
+    ok('html export uses the generic card class', /art-card/.test(html) && !/leaf-card/.test(html));
+
+    // --- both agree on geometry ---
+    const svgD = [...d1.querySelectorAll('path')].map(p => p.getAttribute('d')).join('|');
+    const htmD = [...d2.querySelectorAll('svg path')].map(p => p.getAttribute('d')).join('|');
+    ok('svg and html contain identical path data', svgD === htmD);
+
+    // --- filenames ---
+    ok('download name from title', slugName('svg') === 'green-leaf-vector.svg' &&
+       slugName('html') === 'green-leaf-vector.html', slugName('svg') + ' / ' + slugName('html'));
+
+    // --- round trip: export then re-import ---
+    const res = importSVGText(svg);
+    ok('exported svg can be re-imported', res.count === 17, res.count + ' shapes back');
+    ok('re-import keeps the viewBox', model.doc.viewBox.w === 500);
+
+    // --- no leaf-specific branding left in the UI ---
+    const ui = document.body.innerHTML;
+    ok('app is no longer branded as a leaf tool', !/Leaf Studio/i.test(ui) && /SVG Editor Studio/.test(ui));
+    ok('code pane offers both modes', !!document.getElementById('bModeSvg') && !!document.getElementById('bModeHtml'));
+    ok('toolbar offers svg + html download', !!document.getElementById('bDownload') &&
+       !!document.getElementById('bDownloadHtml') && !!document.getElementById('bCopyHtml'));
+  } catch(e){ R.push('FAIL | THREW | '+e.message+' | '+(e.stack||'').split(String.fromCharCode(10))[1]); }
+  const f=R.filter(r=>r.startsWith('FAIL')).length;
+  const d=document.createElement('div'); d.textContent='TEST-RESULTS '+(R.length-f)+'/'+R.length+' passed';
+  document.body.appendChild(d);
+  R.forEach(r=>{const x=document.createElement('div');x.textContent='TEST| '+r;document.body.appendChild(x);});
+})();
+</script>
+</body>
+</html>
