@@ -79,7 +79,7 @@ export default function BusinessApp() {
   );
 
   return (
-    <div className="flex h-full w-full bg-[#fbfdfa] font-sans text-fg">
+    <div className="flex h-full w-full bg-panel-2 font-sans text-fg">
       <aside className="flex w-[118px] shrink-0 flex-col gap-0.5 border-r border-ink/8 bg-white px-2.5 py-3">
         <div className="mb-2.5 flex items-center gap-1.5 px-1.5">
           <span className="flex h-5 w-5 items-center justify-center rounded bg-panel-3 text-[9px] font-bold text-lime-light">
@@ -181,7 +181,7 @@ export default function BusinessApp() {
           <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                   <th className="px-2.5 py-1.5 font-semibold">Project</th>
                   <th className="px-2.5 py-1.5 font-semibold">Team</th>
                   <th className="px-2.5 py-1.5 font-semibold">Due</th>
@@ -275,7 +275,7 @@ export default function BusinessApp() {
             <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                  <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                     <th className="px-2.5 py-1.5 font-semibold">Invoice</th>
                     <th className="px-2.5 py-1.5 font-semibold">Client</th>
                     <th className="px-2.5 py-1.5 text-right font-semibold">Amount</th>

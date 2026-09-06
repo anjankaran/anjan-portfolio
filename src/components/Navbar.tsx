@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { profile } from "../data/content";
 
 const links = [
@@ -12,7 +12,46 @@ const links = [
   { href: "#contact", label: "Contact" },
 ];
 
-export default function Navbar({ ready }: { ready: boolean }) {
+type Theme = "light" | "dark";
+
+function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
+  const dark = theme === "dark";
+
+  return (
+    <button
+      type="button"
+      aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
+      aria-pressed={dark}
+      onClick={onToggle}
+      className={`group relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border transition-[background-color,border-color,box-shadow] duration-500 ${
+        dark
+          ? "border-white/15 bg-white/10 shadow-[0_0_22px_rgba(230,245,218,0.16)]"
+          : "border-panel-3/10 bg-white/75 shadow-sm shadow-panel-3/10 backdrop-blur"
+      }`}
+    >
+      <motion.span
+        key={theme}
+        initial={{ rotate: -35, scale: 0.72, opacity: 0 }}
+        animate={{ rotate: 0, scale: 1, opacity: 1 }}
+        exit={{ rotate: 35, scale: 0.72, opacity: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className={dark ? "text-lime-light" : "text-lime"}
+      >
+        {dark ? <Moon size={18} className="text-lime-light drop-shadow-[0_0_10px_rgba(215,247,196,0.45)]" /> : <Sun size={18} />}
+      </motion.span>
+    </button>
+  );
+}
+
+export default function Navbar({
+  ready,
+  theme,
+  onToggleTheme,
+}: {
+  ready: boolean;
+  theme: Theme;
+  onToggleTheme: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [overHero, setOverHero] = useState(true);
@@ -123,6 +162,7 @@ export default function Navbar({ ready }: { ready: boolean }) {
         </nav>
 
         <div className="mr-28 hidden items-center gap-3 md:flex">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           <a
             href="#contact"
             className="rounded-full bg-lime px-4 py-2 text-[13px] font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"
@@ -131,15 +171,18 @@ export default function Navbar({ ready }: { ready: boolean }) {
           </a>
         </div>
 
-        <button
-          aria-label="Toggle menu"
-          onClick={() => setOpen((o) => !o)}
-          className={`rounded-full border p-2 md:hidden ${
-            overHero ? "border-panel-3/15 bg-white/70 text-panel-3" : "border-white/15 bg-white/10 text-white"
-          }`}
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          <button
+            aria-label="Toggle menu"
+            onClick={() => setOpen((o) => !o)}
+            className={`rounded-full border p-2 ${
+              overHero ? "border-panel-3/15 bg-white/70 text-panel-3" : "border-white/15 bg-white/10 text-white"
+            }`}
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
 
       {open && (

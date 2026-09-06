@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Services from "./components/Services";
@@ -15,9 +15,23 @@ import { ContactModalProvider } from "./context/ContactModalContext";
 import LeafFall from "./components/leaf/LeafFall";
 import LeafCursor from "./components/leaf/LeafCursor";
 
+type Theme = "light" | "dark";
+
 function App() {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = window.localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [ready, setReady] = useState(false);
   const handleReveal = useCallback(() => setReady(true), []);
+  const toggleTheme = useCallback(() => setTheme((current) => (current === "dark" ? "light" : "dark")), []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem("theme", theme);
+  }, [theme]);
 
   return (
     <ContactModalProvider>
@@ -32,7 +46,7 @@ function App() {
         <div className="pointer-events-none fixed -right-40 -top-44 h-[760px] w-[760px] rounded-full bg-[radial-gradient(circle,rgba(79,154,42,0.12),transparent_62%)]" />
         <div className="pointer-events-none fixed -bottom-60 -left-40 h-[640px] w-[640px] rounded-full bg-[radial-gradient(circle,rgba(79,154,42,0.08),transparent_65%)]" />
 
-        <Navbar ready={ready} />
+        <Navbar ready={ready} theme={theme} onToggleTheme={toggleTheme} />
 
         <Hero ready={ready} />
 

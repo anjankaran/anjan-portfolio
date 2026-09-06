@@ -58,9 +58,14 @@ export default function IntroLoader({ onReveal }: { onReveal: () => void }) {
             transition={{ duration: 0.6, ease: EASE }}
             className="relative flex flex-col items-center px-4 text-center"
           >
-            <motion.img
-              src="/assets/logo.png"
-              alt="Anjan Karan"
+            <motion.video
+              src="/assets/logo_animation.mp4"
+              poster="/assets/logo.png"
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              aria-label="Anjan Karan logo animation"
               initial={{ opacity: 0, scale: 0.82, y: 12 }}
               animate={{
                 opacity: 1,
@@ -68,8 +73,11 @@ export default function IntroLoader({ onReveal }: { onReveal: () => void }) {
                 y: phase === "exit" ? -6 : 0,
               }}
               transition={{ duration: 0.8, ease: EASE }}
-              className="h-36 w-36 object-contain drop-shadow-[0_22px_38px_rgba(14,36,24,0.22)] sm:h-44 sm:w-44"
-            />
+              className="h-52 w-52 object-contain opacity-85 mix-blend-multiply drop-shadow-[0_24px_42px_rgba(14,36,24,0.18)] sm:h-60 sm:w-60"
+              style={{ filter: "brightness(1.2) contrast(1.45) saturate(1.08)" }}
+            >
+              <track kind="captions" />
+            </motion.video>
 
             <AnimatePresence>
               {(phase === "tagline" || phase === "exit") && (

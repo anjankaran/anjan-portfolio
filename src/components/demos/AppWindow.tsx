@@ -38,15 +38,15 @@ export default function AppWindow({
   }, [baseWidth]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-ink/10 bg-white shadow-[0_18px_40px_-24px_rgba(14,36,24,0.45)]">
+    <div className="overflow-hidden rounded-xl border border-ink/10 bg-panel shadow-[0_18px_40px_-24px_rgba(14,36,24,0.45)]">
       {/* title bar */}
-      <div className="flex items-center gap-2 border-b border-ink/8 bg-[#f6f9f4] px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-ink/8 bg-panel-2 px-3 py-2">
         <span className="flex gap-1.5">
           <i className="h-2 w-2 rounded-full bg-[#e8695c]" />
           <i className="h-2 w-2 rounded-full bg-[#f0bc5e]" />
           <i className="h-2 w-2 rounded-full bg-[#63c47a]" />
         </span>
-        <div className="ml-1 flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-white/80 px-2 py-1">
+        <div className="ml-1 flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-panel/80 px-2 py-1">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: accent }} />
           <span className="truncate font-mono text-[10px] text-fg/45">{title}</span>
         </div>

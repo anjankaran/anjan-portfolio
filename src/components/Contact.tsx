@@ -7,7 +7,7 @@ export default function Contact() {
 
   return (
     <section id="contact" className="px-2 py-6">
-      <Reveal className="flex flex-wrap items-center justify-between gap-8 rounded-[22px] border border-lime/25 bg-gradient-to-r from-lime-light to-white p-9 shadow-sm shadow-black/5">
+      <Reveal className="contact-card flex flex-wrap items-center justify-between gap-8 rounded-[22px] border border-lime/25 bg-gradient-to-r from-lime-light to-white p-9 shadow-sm shadow-black/5">
         <div>
           <h2 className="text-[clamp(1.6rem,4vw,2.2rem)] font-extrabold leading-tight tracking-tight">
             Have a workflow worth

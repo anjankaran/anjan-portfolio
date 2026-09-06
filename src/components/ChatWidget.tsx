@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, ChevronDown, X } from "lucide-react";
+import { ChevronDown, Leaf, X } from "lucide-react";
 import ChatPanel from "./ChatPanel";
 
 export default function ChatWidget() {
@@ -19,8 +19,8 @@ export default function ChatWidget() {
           >
             <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime/15 text-lime">
-                  <Bot size={16} />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime text-white shadow-[0_0_18px_rgba(79,154,42,0.42)]">
+                  <Leaf size={16} />
                 </span>
                 <div className="leading-tight">
                   <b className="block text-[13px] font-bold">Portfolio Agent</b>
@@ -47,7 +47,7 @@ export default function ChatWidget() {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Toggle AI agent chat"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-lime text-panel-3 shadow-xl shadow-lime/20"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-lime text-white shadow-[0_0_24px_rgba(79,154,42,0.52),0_16px_34px_-18px_rgba(14,36,24,0.7)]"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
@@ -57,7 +57,7 @@ export default function ChatWidget() {
             exit={{ opacity: 0, rotate: 45 }}
             transition={{ duration: 0.2 }}
           >
-            {open ? <X size={20} /> : <Bot size={22} />}
+            {open ? <X size={20} /> : <Leaf size={22} className="drop-shadow-[0_0_8px_rgba(255,255,255,0.75)]" />}
           </motion.span>
         </AnimatePresence>
       </motion.button>

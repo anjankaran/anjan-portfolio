@@ -7,7 +7,7 @@ export const profile = {
   taglineAccent: "Itself.",
   summary:
     "I build full stack products, AI-driven workflows and Zoho automations — APIs, data models and integrations that remove manual work from the business.",
-  email: "anjan.karan@vivrepanels.com",
+  email: "karananjan7@gmail.com",
   location: "Available worldwide · Remote",
   socials: [
     { label: "GitHub", href: "https://github.com/" },

@@ -180,7 +180,7 @@ export default function AnalyticsDashboard() {
   const data = RANGES[range];
 
   return (
-    <div className="flex h-full w-full bg-[#fbfdfa] font-sans text-fg">
+    <div className="flex h-full w-full bg-panel-2 font-sans text-fg">
       <aside className="flex w-[124px] shrink-0 flex-col gap-0.5 border-r border-ink/8 bg-white px-2.5 py-3">
         <div className="mb-2.5 flex items-center gap-1.5 px-1.5">
           <span className="flex h-5 w-5 items-center justify-center rounded bg-lime text-[9px] font-bold text-white">
@@ -345,7 +345,7 @@ export default function AnalyticsDashboard() {
           <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                   <th className="px-2.5 py-1.5 font-semibold">Order</th>
                   <th className="px-2.5 py-1.5 font-semibold">Customer</th>
                   <th className="px-2.5 py-1.5 font-semibold">City</th>
@@ -383,7 +383,7 @@ export default function AnalyticsDashboard() {
             <div className="overflow-hidden rounded-lg border border-ink/8 bg-white">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                  <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                     <th className="px-2.5 py-1.5 font-semibold">Customer</th>
                     <th className="px-2.5 py-1.5 text-right font-semibold">Orders</th>
                     <th className="px-2.5 py-1.5 text-right font-semibold">Spend</th>

@@ -16,8 +16,8 @@ const kindStyle: Record<Project["kind"], string> = {
   Demo: "bg-white text-panel-3 border-white",
 };
 
-const cardAngles = [-1.8, 1.3, -1, 1.6];
-const cardOffsets = [-26, 20, -16, 28];
+const cardAngles = [-2.4, 1.9, -1.6, 2.2];
+const cardOffsets = [-38, 30, -28, 42];
 const demos = {
   analytics: { title: "acme-analytics / sales-overview", width: 940, height: 470, render: () => <AnalyticsDashboard /> },
   business: { title: "workspace / projects", width: 940, height: 470, render: () => <BusinessApp /> },
@@ -41,7 +41,7 @@ function StackCard({ p, index }: { p: Project; index: number }) {
           transformOrigin: "center bottom",
           transformStyle: "preserve-3d",
         }}
-        initial={{ x: translateX, y: 120, rotateX: 18, rotateZ, scale: 0.9 }}
+        initial={{ x: translateX, y: 165, rotateX: 22, rotateZ, scale: 0.88 }}
         whileInView={{ x: 0, y: 0, rotateX: 0, rotateZ: 0, scale: 1 }}
         viewport={{ once: true, amount: 0.38 }}
         transition={{ duration: 0.8, ease: EASE }}

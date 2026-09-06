@@ -78,7 +78,7 @@ export default function ZohoCreatorApp() {
   );
 
   return (
-    <div className="flex h-full w-full bg-[#fbfdfa] font-sans text-fg">
+    <div className="flex h-full w-full bg-panel-2 font-sans text-fg">
       <aside className="flex w-[112px] shrink-0 flex-col gap-0.5 border-r border-ink/8 bg-white px-2.5 py-3">
         <div className="mb-2.5 px-1.5 text-[13px] font-extrabold tracking-tight">
           <span className="text-[#e8695c]">z</span>
@@ -185,7 +185,7 @@ export default function ZohoCreatorApp() {
             <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                  <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                     <TH>Name</TH>
                     <TH>Company</TH>
                     <TH>Email</TH>
@@ -226,7 +226,7 @@ export default function ZohoCreatorApp() {
           <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                   <TH>Lead</TH>
                   <TH>Source</TH>
                   <TH right>Value</TH>
@@ -273,7 +273,7 @@ export default function ZohoCreatorApp() {
           <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-ink/8 bg-white">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-[#f6f9f4] text-left text-[8.5px] uppercase tracking-wide text-fg/40">
+                <tr className="bg-panel-2 text-left text-[8.5px] uppercase tracking-wide text-fg/40">
                   <TH>Invoice</TH>
                   <TH>Client</TH>
                   <TH right>Amount</TH>
