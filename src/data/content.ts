@@ -79,7 +79,7 @@ export type Project = {
   href?: string;
   metric?: string;
   /** renders a real, running mini-app inside the card */
-  demo?: "analytics" | "business" | "zoho";
+  demo?: "analytics" | "business" | "zoho" | "whatsapp" | "website" | "mobile" | "operations";
 };
 
 export const projects: Project[] = [
@@ -124,6 +124,7 @@ export const projects: Project[] = [
       "A WhatsApp automation that answers order status, returns and invoice requests instantly, pulling live data from Zoho/order APIs. Try the live demo below.",
     tags: ["WhatsApp API", "Zoho", "Automation"],
     kind: "Demo",
+    demo: "whatsapp",
   },
   {
     id: "business-website",
@@ -133,6 +134,7 @@ export const projects: Project[] = [
       "Fast, SEO-friendly marketing and business websites — from landing pages to full CMS-driven sites, built for conversions.",
     tags: ["Next.js", "SEO", "CMS"],
     kind: "Live",
+    demo: "website",
   },
   {
     id: "mobile-app",
@@ -142,6 +144,7 @@ export const projects: Project[] = [
       "A single React Native codebase shipping native iOS and Android apps — push notifications, offline sync and in-app payments.",
     tags: ["React Native", "iOS", "Android"],
     kind: "Live",
+    demo: "mobile",
   },
   {
     id: "inhouse-platform",
@@ -151,6 +154,7 @@ export const projects: Project[] = [
       "A ground-up in-house application replacing spreadsheets and disconnected tools with one custom system — built, deployed and maintained end to end.",
     tags: ["Full Stack", "Internal Tools", "DevOps"],
     kind: "Live",
+    demo: "operations",
   },
 ];
 

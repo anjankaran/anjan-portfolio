@@ -7,6 +7,10 @@ import AppWindow from "./demos/AppWindow";
 import AnalyticsDashboard from "./demos/AnalyticsDashboard";
 import BusinessApp from "./demos/BusinessApp";
 import ZohoCreatorApp from "./demos/ZohoCreatorApp";
+import WhatsAppOrderBot from "./demos/WhatsAppOrderBot";
+import BusinessWebsite from "./demos/BusinessWebsite";
+import VeyraApp from "./demos/VeyraApp";
+import OperationsPlatform from "./demos/OperationsPlatform";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -22,6 +26,10 @@ const demos = {
   analytics: { title: "acme-analytics / sales-overview", width: 940, height: 470, render: () => <AnalyticsDashboard /> },
   business: { title: "workspace / projects", width: 940, height: 470, render: () => <BusinessApp /> },
   zoho: { title: "creator / customer-management", width: 940, height: 470, render: () => <ZohoCreatorApp /> },
+  whatsapp: { title: "wa-business / order-assistant", width: 940, height: 470, render: () => <WhatsAppOrderBot /> },
+  website: { title: "northstar.studio / home", width: 940, height: 470, render: () => <BusinessWebsite /> },
+  mobile: { title: "veyra / iOS + Android", width: 940, height: 470, render: () => <VeyraApp /> },
+  operations: { title: "field-ops / overview", width: 940, height: 470, render: () => <OperationsPlatform /> },
 };
 
 function StackCard({ p, index }: { p: Project; index: number }) {
