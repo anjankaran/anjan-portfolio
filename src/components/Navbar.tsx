@@ -52,6 +52,7 @@ export default function Navbar({
   theme: Theme;
   onToggleTheme: () => void;
 }) {
+  const dark = theme === "dark";
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [overHero, setOverHero] = useState(true);
@@ -146,14 +147,16 @@ export default function Navbar({
             <a
               key={l.href}
               href={l.href}
-              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
+              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-200 hover:-translate-y-0.5 ${
                 activeHref === l.href
                   ? overHero
                     ? "bg-lime text-white shadow-sm shadow-lime/20"
-                    : "bg-white text-panel-3 shadow-sm shadow-black/10"
+                    : dark
+                      ? "bg-lime text-panel-3 shadow-sm shadow-lime/25"
+                      : "bg-white text-panel-3 shadow-sm shadow-black/10"
                   : overHero
-                    ? "text-panel-3/75 hover:text-lime"
-                    : "text-white/75 hover:text-lime-light"
+                    ? "text-panel-3/75 hover:bg-panel-3/5 hover:text-lime"
+                    : "text-white/75 hover:bg-white/10 hover:text-lime-light"
               }`}
             >
               {l.label}
@@ -196,9 +199,11 @@ export default function Navbar({
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className={`rounded-xl px-4 py-3 text-sm font-medium ${
+              className={`rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
                 activeHref === l.href
-                  ? "bg-white text-panel-3"
+                  ? dark
+                    ? "bg-lime text-panel-3"
+                    : "bg-white text-panel-3"
                   : "text-white/80 hover:bg-white/10 hover:text-lime-light"
               }`}
             >

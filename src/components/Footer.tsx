@@ -7,9 +7,9 @@ export default function Footer() {
       <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-lime/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-lime/10 blur-3xl" />
 
-      <div className="relative mx-auto max-w-[1320px] px-5 py-8 sm:px-8 lg:px-10">
-        <div className="flex flex-wrap items-start justify-between gap-8">
-          <div>
+      <div className="relative mx-auto max-w-[1320px] px-5 pb-12 sm:px-8 lg:px-10">
+        <div className="relative flex flex-wrap items-start justify-between gap-8 pt-16">
+          <div className="relative z-30 -translate-y-12">
             <a href="#top" className="flex items-center gap-2.5 text-[15px] font-extrabold tracking-tight text-white">
               <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm shadow-black/10">
                 <img src="/assets/logo.png" alt="" className="h-7 w-7 object-contain" />
@@ -22,7 +22,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div>
+          <div className="relative z-10 -translate-y-12">
             <b className="text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-light">Connect</b>
             <ul className="mt-3 space-y-2">
               <li>
@@ -43,7 +43,7 @@ export default function Footer() {
 
         <FooterTrees />
 
-        <div className="relative mt-2 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 text-[12px] text-white/45 sm:flex-row">
+        <div className="relative z-10 mt-2 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 text-[12px] text-white/45 sm:flex-row">
           <span>© {new Date().getFullYear()} {profile.name}. All rights reserved.</span>
           <span className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />

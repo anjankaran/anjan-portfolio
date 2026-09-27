@@ -14,7 +14,7 @@ export default function Contact() {
             <br />
             automating?
           </h2>
-          <p className="mt-3 text-sm text-fg/70">Let's talk — replies within a day.</p>
+          <p className="mt-3 text-sm text-fg/70">Let's talk.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3.5">
           <button

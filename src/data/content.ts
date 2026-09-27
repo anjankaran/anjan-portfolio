@@ -17,9 +17,9 @@ export const profile = {
 };
 
 export const stats = [
-  { value: "6+", label: "Years building software" },
-  { value: "40+", label: "Projects shipped" },
-  { value: "1,240 hrs", label: "Saved via automation" },
+  { value: "4+", label: "Years building software" },
+  { value: "20+", label: "Projects shipped" },
+  { value: "1,040 hrs", label: "Saved via automation" },
 ];
 
 export type Service = {
