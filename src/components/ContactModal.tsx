@@ -87,7 +87,7 @@ export default function ContactModal() {
               <button
                 aria-label="Close"
                 onClick={closeModal}
-                className="rounded-full p-1.5 text-fg/50 hover:bg-ink/5 hover:text-fg"
+                className="rounded-xl p-1.5 text-fg/50 hover:bg-ink/5 hover:text-fg"
               >
                 <X size={18} />
               </button>
@@ -153,7 +153,7 @@ export default function ContactModal() {
                 </div>
                 <button
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-lime px-5 py-3 text-[13.5px] font-bold text-panel-3 transition-transform hover:scale-[1.02]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-lime px-5 py-3 text-[13.5px] font-bold text-panel-3 transition-transform hover:scale-[1.02]"
                 >
                   Send message
                   <Send size={15} />

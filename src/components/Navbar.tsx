@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from "framer-motion";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { profile } from "../data/content";
 
 const links = [
-  { href: "#work", label: "Work" },
   { href: "#services", label: "Services" },
+  { href: "#work", label: "Work" },
   { href: "#stack", label: "Stack" },
   { href: "#about", label: "About" },
-  { href: "#agent", label: "AI Agent" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -23,7 +22,7 @@ function ThemeToggle({ theme, onToggle }: { theme: Theme; onToggle: () => void }
       aria-label={`Switch to ${dark ? "light" : "dark"} theme`}
       aria-pressed={dark}
       onClick={onToggle}
-      className={`group relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border transition-[background-color,border-color,box-shadow] duration-500 ${
+      className={`group relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border transition-[background-color,border-color,box-shadow] duration-500 ${
         dark
           ? "border-white/15 bg-white/10 shadow-[0_0_22px_rgba(230,245,218,0.16)]"
           : "border-panel-3/10 bg-white/75 shadow-sm shadow-panel-3/10 backdrop-blur"
@@ -54,29 +53,12 @@ export default function Navbar({
 }) {
   const dark = theme === "dark";
   const [open, setOpen] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const [overHero, setOverHero] = useState(true);
   const [activeHref, setActiveHref] = useState("");
-  const lastY = useRef(0);
 
   useEffect(() => {
-    lastY.current = window.scrollY;
-
     const onScroll = () => {
       const y = window.scrollY;
-      const goingDown = y > lastY.current;
-
-      if (open) {
-        lastY.current = y;
-        return;
-      }
-
-      if (goingDown && y > 120) {
-        setHidden(true);
-      } else {
-        setHidden(false);
-      }
-      lastY.current = y;
 
       const isOverHero = y < 12;
       setOverHero(isOverHero);
@@ -101,53 +83,72 @@ export default function Navbar({
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [open]);
-
-  const hiddenNow = hidden && !overHero;
+  }, []);
 
   // how far down the page you are - the same value the leaves fall on
-  const { scrollYProgress } = useScroll();
+  const { scrollY, scrollYProgress } = useScroll();
   const growth = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.4 });
+  const scrollSmooth = useSpring(scrollY, { stiffness: 300, damping: 40, mass: 0.4 });
+  const navT = useTransform(scrollSmooth, [0, 160], [0, 1]);
+  const navOuterTop = useTransform(navT, [0, 1], [0, 12]);
+  const navOuterSide = useTransform(navT, [0, 1], [0, 24]);
+  const navRadius = useTransform(navT, [0, 1], [0, 16]);
+  const navMaxWidth = useTransform(navT, [0, 1], [1276, 1040]);
+  const navPaddingY = useTransform(navT, [0, 1], [12, 7]);
+  const navPadding = useMotionTemplate`${navPaddingY}px 24px`;
+  const navBg = useMotionTemplate`rgba(10, 29, 20, ${useTransform(navT, [0, 1], [0, 0.94])})`;
+  const navBorder = useMotionTemplate`rgba(255, 255, 255, ${useTransform(navT, [0, 1], [0, 0.1])})`;
+  const navBlur = useMotionTemplate`blur(${useTransform(navT, [0, 1], [0, 14])}px)`;
+  const navShadow = useMotionTemplate`0 16px 36px -12px rgba(0, 0, 0, ${useTransform(navT, [0, 1], [0, 0.55])})`;
 
   return (
     <motion.header
       initial={{ y: -30, opacity: 0 }}
-      animate={!ready ? { y: -30, opacity: 0 } : { y: hiddenNow ? -110 : 0, opacity: hiddenNow ? 0 : 1 }}
+      animate={ready ? { y: 0, opacity: 1 } : { y: -30, opacity: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed inset-x-0 top-0 z-50 w-full transition-colors duration-300 ${
-        overHero
-          ? "bg-transparent"
-          : "bg-gradient-to-r from-[#123021] via-[#0e2418] to-[#0a1d14] shadow-md shadow-black/15"
-      }`}
+      className="fixed inset-x-0 top-0 z-50 flex justify-center pointer-events-none"
+      style={{ paddingTop: navOuterTop, paddingLeft: navOuterSide, paddingRight: navOuterSide }}
     >
-      {/* growth line: fills as you scroll the page */}
       <motion.div
-        aria-hidden="true"
-        style={{ scaleX: growth }}
-        className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-gradient-to-r from-lime/70 via-lime to-lime-light"
-      />
+        className="relative w-full overflow-visible border"
+        style={{
+          maxWidth: navMaxWidth,
+          borderRadius: navRadius,
+          borderColor: navBorder,
+          background: navBg,
+          backdropFilter: navBlur,
+          WebkitBackdropFilter: navBlur,
+          boxShadow: navShadow,
+          pointerEvents: "auto",
+        }}
+      >
+        {/* growth line: fills as you scroll the page */}
+        <motion.div
+          aria-hidden="true"
+          style={{ scaleX: growth, borderRadius: navRadius }}
+          className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-gradient-to-r from-lime/70 via-lime to-lime-light"
+        />
 
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <motion.div className="mx-auto flex max-w-[1240px] items-center justify-between gap-4" style={{ padding: navPadding }}>
         <a
           href="#top"
-          className="flex items-center gap-2.5 text-[15px] font-extrabold tracking-normal"
+          className="flex shrink-0 items-center gap-2.5 text-[15px] font-extrabold tracking-normal"
         >
-          <span
-            className={`flex items-center justify-center overflow-hidden transition-colors duration-300 ${
-              overHero ? "h-11 w-11" : "h-10 w-10 rounded-lg bg-white shadow-sm shadow-black/10"
+            <span className={`flex h-11 w-11 items-center justify-center overflow-hidden transition-colors duration-300 ${
+              overHero ? "" : "rounded-lg bg-white shadow-sm shadow-black/10"
             }`}
           >
-            <img src="/assets/logo.png" alt="" className={overHero ? "h-11 w-11 object-contain" : "h-8 w-8 object-contain"} />
+            <img src="/assets/logo.png" alt="" className="h-11 w-11 object-contain" />
           </span>
           <span className={overHero ? "text-[#2f7d1c]" : "text-white"}>{profile.name}</span>
         </a>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-200 hover:-translate-y-0.5 ${
+              className={`rounded-xl px-4 py-2 text-[13px] font-medium transition-all duration-200 hover:-translate-y-0.5 ${
                 activeHref === l.href
                   ? overHero
                     ? "bg-lime text-white shadow-sm shadow-lime/20"
@@ -164,14 +165,14 @@ export default function Navbar({
           ))}
         </nav>
 
-        <div className="mr-28 hidden items-center gap-3 md:flex">
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
           <a
             href="#contact"
-            className="rounded-full bg-lime px-4 py-2 text-[13px] font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"
+            className="rounded-xl bg-lime px-4 py-2 text-[13px] font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"
           >
             Let's Talk
           </a>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -179,14 +180,14 @@ export default function Navbar({
           <button
             aria-label="Toggle menu"
             onClick={() => setOpen((o) => !o)}
-            className={`rounded-full border p-2 ${
+            className={`rounded-xl border p-2 ${
               overHero ? "border-panel-3/15 bg-white/70 text-panel-3" : "border-white/15 bg-white/10 text-white"
             }`}
           >
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {open && (
         <motion.nav
@@ -219,6 +220,7 @@ export default function Navbar({
           </a>
         </motion.nav>
       )}
+      </motion.div>
     </motion.header>
   );
 }

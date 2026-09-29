@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import RealLeaf, { LEAF_RATIO } from "./RealLeaf";
 
@@ -16,6 +16,7 @@ export default function LeafCursor() {
   const reduced = useReducedMotion();
   const [active, setActive] = useState(false);
   const [hot, setHot] = useState(false);   // over something interactive
+  const started = useRef(false);
 
   const x = useMotionValue(-200);
   const y = useMotionValue(-200);
@@ -31,14 +32,18 @@ export default function LeafCursor() {
     if (reduced) return;
     if (!window.matchMedia("(pointer: fine)").matches) return;
 
-    setActive(true);
-    document.documentElement.classList.add("leaf-cursor");
-
     let last = 0;
     let px = 0;
     let py = 0;
 
     const onMove = (e: PointerEvent) => {
+      // Wait for the first real pointer position so the custom cursor never
+      // animates in from its off-screen initial value at the top-left.
+      if (!started.current) {
+        started.current = true;
+        setActive(true);
+        document.documentElement.classList.add("leaf-cursor");
+      }
       x.set(e.clientX);
       y.set(e.clientY);
 

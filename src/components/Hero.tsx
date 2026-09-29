@@ -124,7 +124,7 @@ export default function Hero({ ready }: { ready: boolean }) {
           <motion.div variants={item} className="mt-8 flex flex-wrap items-center gap-6">
             <a
               href="#work"
-              className="group flex items-center gap-2 rounded-full bg-lime px-6 py-3.5 text-sm font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"
+              className="group flex items-center gap-2 rounded-xl bg-lime px-6 py-3.5 text-sm font-bold text-white shadow-sm shadow-lime/30 transition-transform hover:scale-105"
             >
               View Work
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

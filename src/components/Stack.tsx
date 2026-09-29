@@ -11,7 +11,7 @@ function Row({ reverse = false }: { reverse?: boolean }) {
       {items.map((t, i) => (
         <span
           key={`${t.label}-${i}`}
-          className={`whitespace-nowrap rounded-full border px-5 py-2.5 font-mono text-[13px] shadow-sm shadow-black/5 ${
+          className={`whitespace-nowrap rounded-xl border px-5 py-2.5 font-mono text-[13px] shadow-sm shadow-black/5 ${
             t.featured
               ? "border-lime bg-lime text-panel-3"
               : "border-ink/10 bg-white text-fg/80"

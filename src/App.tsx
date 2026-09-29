@@ -5,7 +5,6 @@ import Services from "./components/Services";
 import Projects from "./components/Projects";
 import Stack from "./components/Stack";
 import About from "./components/About";
-import AgentSection from "./components/AgentSection";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import ChatWidget from "./components/ChatWidget";
@@ -56,7 +55,6 @@ function App() {
             <Projects />
             <Stack />
             <About />
-            <AgentSection />
             <Contact />
           </main>
         </div>

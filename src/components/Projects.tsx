@@ -7,7 +7,7 @@ import AppWindow from "./demos/AppWindow";
 import AnalyticsDashboard from "./demos/AnalyticsDashboard";
 import BusinessApp from "./demos/BusinessApp";
 import ZohoCreatorApp from "./demos/ZohoCreatorApp";
-import WhatsAppOrderBot from "./demos/WhatsAppOrderBot";
+import WhatsAppChatPanel from "./WhatsAppChatPanel";
 import BusinessWebsite from "./demos/BusinessWebsite";
 import VeyraApp from "./demos/VeyraApp";
 import OperationsPlatform from "./demos/OperationsPlatform";
@@ -26,7 +26,7 @@ const demos = {
   analytics: { title: "acme-analytics / sales-overview", width: 940, height: 470, render: () => <AnalyticsDashboard /> },
   business: { title: "workspace / projects", width: 940, height: 470, render: () => <BusinessApp /> },
   zoho: { title: "creator / customer-management", width: 940, height: 470, render: () => <ZohoCreatorApp /> },
-  whatsapp: { title: "wa-business / order-assistant", width: 940, height: 470, render: () => <WhatsAppOrderBot /> },
+  whatsapp: { title: "wa-business / order-assistant", width: 940, height: 470, render: () => <WhatsAppChatPanel /> },
   website: { title: "northstar.studio / home", width: 940, height: 470, render: () => <BusinessWebsite /> },
   mobile: { title: "veyra / iOS + Android", width: 940, height: 470, render: () => <VeyraApp /> },
   operations: { title: "field-ops / overview", width: 940, height: 470, render: () => <OperationsPlatform /> },
@@ -60,7 +60,7 @@ function StackCard({ p, index }: { p: Project; index: number }) {
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-lime/15 blur-3xl transition-opacity group-hover:opacity-80" />
 
         <div className="absolute inset-x-5 top-5 z-10 flex items-start justify-between gap-3 sm:inset-x-8 sm:top-8 lg:inset-x-14">
-          <span className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold ${kindStyle[p.kind]}`}>
+          <span className={`rounded-xl border px-3 py-1.5 text-[12px] font-semibold ${kindStyle[p.kind]}`}>
             {p.kind}
           </span>
           <a href={href} aria-label={`Open ${p.title}`}>
@@ -88,7 +88,7 @@ function StackCard({ p, index }: { p: Project; index: number }) {
 
           {demo && (
             <div
-              className="hidden min-w-0 self-center justify-self-end sm:block"
+              className="relative z-20 hidden min-w-0 self-center justify-self-end sm:block"
               style={{
                 width: "100%",
                 maxWidth: `min(100%, calc((80vh - 8.5rem) * ${demo.width / demo.height}))`,

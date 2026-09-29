@@ -97,7 +97,7 @@ export default function ChatPanel({ compact = false }: { compact?: boolean }) {
             <button
               key={s}
               onClick={() => send(s)}
-              className="rounded-full border border-ink/10 bg-white px-3 py-1.5 text-[11px] text-fg/70 shadow-sm shadow-black/5 hover:border-lime/40 hover:text-lime"
+                className="rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-[11px] text-fg/70 shadow-sm shadow-black/5 hover:border-lime/40 hover:text-lime"
             >
               {s}
             </button>
@@ -116,7 +116,7 @@ export default function ChatPanel({ compact = false }: { compact?: boolean }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about my stack, Zoho work, availability…"
-          className="flex-1 rounded-full border border-ink/10 bg-panel-2 px-4 py-2.5 text-[13px] text-fg placeholder:text-fg/40 outline-none focus:border-lime/40"
+          className="flex-1 rounded-xl border border-ink/10 bg-panel-2 px-4 py-2.5 text-[13px] text-fg placeholder:text-fg/40 outline-none focus:border-lime/40"
         />
         <button
           type="submit"

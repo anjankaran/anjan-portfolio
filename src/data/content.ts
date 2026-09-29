@@ -118,13 +118,14 @@ export const projects: Project[] = [
   },
   {
     id: "agent-widget",
-    title: "WhatsApp Order Bot",
-    category: "WhatsApp Business API · Zoho",
+    title: "WhatsApp Order Agent",
+    category: "WhatsApp Business API · Zoho · AI Agent",
     description:
-      "A WhatsApp automation that answers order status, returns and invoice requests instantly, pulling live data from Zoho/order APIs. Try the live demo below.",
+      "A live conversational agent that answers order status, returns and invoice requests instantly, pulling data from Zoho and order APIs.",
     tags: ["WhatsApp API", "Zoho", "Automation"],
-    kind: "Demo",
+    kind: "Live",
     demo: "whatsapp",
+    metric: "Try the agent live inside this project card",
   },
   {
     id: "business-website",
@@ -161,6 +162,7 @@ export const projects: Project[] = [
 export const stack = [
   { label: "Node.js" },
   { label: "TypeScript" },
+  { label: "Go / Golang" },
   { label: "Deluge", featured: true },
   { label: "Python" },
   { label: "PostgreSQL" },
@@ -175,17 +177,17 @@ export const stack = [
 
 export const timeline = [
   {
-    year: "2025 — Now",
+    year: "2026— Now",
     title: "Independent Full Stack & Zoho Consultant",
     body: "Partnering with growing businesses to build custom Zoho ecosystems, internal tools and AI-powered automations.",
   },
   {
-    year: "2022 — 2025",
+    year: "2024— 2026",
     title: "Senior Backend Engineer",
     body: "Led API and integrations work for a SaaS platform, owning the data layer and third-party integration surface.",
   },
   {
-    year: "2019 — 2022",
+    year: "2020— 2024",
     title: "Full Stack Developer",
     body: "Shipped customer-facing features end to end across React front ends and Node/Python services.",
   },
@@ -220,7 +222,7 @@ export const portfolioKnowledgeBase: ChatEntry[] = [
   {
     keywords: ["ai", "agent", "automation", "llm", "rag", "gpt", "openai", "whatsapp", "bot"],
     reply:
-      "On the AI side: RAG pipelines over internal docs, support copilots, and WhatsApp Business bots wired into real order/CRM systems. Scroll down to 'AI Agent' to try a live WhatsApp bot demo.",
+      "On the AI side: RAG pipelines over internal docs, support copilots, and WhatsApp Business bots wired into real order/CRM systems. Try the live WhatsApp order agent in Selected Work.",
   },
   {
     keywords: ["project", "work", "portfolio", "case study", "built"],
