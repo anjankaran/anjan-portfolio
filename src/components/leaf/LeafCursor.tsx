@@ -15,8 +15,10 @@ import RealLeaf, { LEAF_RATIO } from "./RealLeaf";
 export default function LeafCursor() {
   const reduced = useReducedMotion();
   const [active, setActive] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [hot, setHot] = useState(false);   // over something interactive
   const started = useRef(false);
+  const away = useRef(true);
 
   const x = useMotionValue(-200);
   const y = useMotionValue(-200);
@@ -37,15 +39,23 @@ export default function LeafCursor() {
     let py = 0;
 
     const onMove = (e: PointerEvent) => {
+      const shouldSnap = !started.current || away.current;
+
       // Wait for the first real pointer position so the custom cursor never
       // animates in from its off-screen initial value at the top-left.
       if (!started.current) {
         started.current = true;
-        setActive(true);
-        document.documentElement.classList.add("leaf-cursor");
       }
       x.set(e.clientX);
       y.set(e.clientY);
+      if (shouldSnap) {
+        sx.jump(e.clientX);
+        sy.jump(e.clientY);
+        away.current = false;
+      }
+      setActive(true);
+      setVisible(true);
+      document.documentElement.classList.add("leaf-cursor");
 
       // point along the direction of travel, but only once it is really moving
       const dx = e.clientX - px;
@@ -64,8 +74,11 @@ export default function LeafCursor() {
 
     const onDown = () => scale.set(0.82);
     const onUp = () => scale.set(1);
-    const onLeave = () => { x.set(-200); y.set(-200); };
-
+    const onLeave = () => {
+      away.current = true;
+      setVisible(false);
+      document.documentElement.classList.remove("leaf-cursor");
+    };
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointerup", onUp, { passive: true });
@@ -88,7 +101,7 @@ export default function LeafCursor() {
   const left = useTransform(sx, (v) => v - W * 0.94);
   const top = useTransform(sy, (v) => v - H * 0.06);
 
-  if (!active) return null;
+  if (!active || !visible) return null;
 
   return (
     <motion.div

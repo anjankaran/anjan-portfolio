@@ -16,7 +16,7 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } },
 };
 
-const roles = ["AI & Automation", "Zoho Developer", "Data Analyst", "Problem Solver"];
+const roles = ["AI & Automation", "Zoho Developer", "Problem Solver"];
 
 function splitStat(value: string) {
   const match = value.match(/^([^0-9]*)([0-9,]+)(.*)$/);
